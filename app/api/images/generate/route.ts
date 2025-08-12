@@ -2,7 +2,9 @@
 import { NextResponse } from "next/server";
 import { GoogleGenAI, Modality } from "@google/genai";
 
-export const runtime = "nodejs"; // 必须：SDK 需要 Node 环境
+
+
+export const runtime = "nodejs"; // 
 
 export async function POST(req: Request) {
   try {
