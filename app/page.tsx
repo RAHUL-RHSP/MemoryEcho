@@ -24,9 +24,20 @@ import {
   AlertTriangle,
   Settings,
   Trash2,
+  Eye,
 } from "lucide-react"
 // Fixed import path for Header component
 import Header from "@/components/Header"
+
+
+type StepDef = {
+  key: string;
+  label: string;
+  required?: boolean;
+  placeholder?: string;
+};
+
+type ChatMsg = { role: "user" | "assistant"; content: string };
 
 // Define all screen components inline instead of importing from separate files
 const ExploreScreen = ({ onStoryClick }: { onStoryClick: (story: any) => void }) => {
@@ -812,294 +823,131 @@ const ProfileScreen = ({
 }
 
 const StoryCreationScreen = ({ onBack }: { onBack: () => void }) => {
-  const [mode, setMode] = useState<"choose" | "record" | "type" | "settings">("choose")
-  const [isRecording, setIsRecording] = useState(false)
-  const [recordingTime, setRecordingTime] = useState(0)
-  const [storyText, setStoryText] = useState("")
-  const [isPublic, setIsPublic] = useState(true)
-  const [isCollaborative, setIsCollaborative] = useState(false)
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [customTag, setCustomTag] = useState("")
+  const [mode, setMode] = useState<"choose" | "record" | "type" | "settings">("choose");
 
-  const predefinedTags = ["nostalgia", "family", "childhood", "love", "tradition", "wisdom", "art", "memories"]
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [storyText, setStoryText] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
+  const [isCollaborative, setIsCollaborative] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [customTag, setCustomTag] = useState("");
+    // === AI Story Chat (config-driven) ===
+  const [steps, setSteps] = useState<StepDef[] | null>(null);
+  const [stepIdx, setStepIdx] = useState(0);
+  const [storyData, setStoryData] = useState<Record<string, string>>({});
+  const [chatMsgs, setChatMsgs] = useState<ChatMsg[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [finalStory, setFinalStory] = useState("");
+  const [imagePrompt, setImagePrompt] = useState("");
 
-  const toggleTag = (tag: string) => {
-    setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
-  }
+  // Load steps from /public/story-steps.json when entering "type" mode
+// 原来：useEffect 里加载 steps 后会 fetch("/api/ask", { lastAnswer: "" }) —— 删除这一段
 
-  const addCustomTag = () => {
-    if (customTag.trim() && !selectedTags.includes(customTag.trim())) {
-      setSelectedTags((prev) => [...prev, customTag.trim()])
-      setCustomTag("")
+useEffect(() => {
+  if (mode !== "type") return;
+  (async () => {
+    try {
+      const res = await fetch("/story-steps.json", { cache: "no-store" });
+      const data: StepDef[] = await res.json();
+      setSteps(data);
+
+      const init: Record<string, string> = {};
+      data.forEach(s => (init[s.key] = ""));
+      setStoryData(init);
+      setFinalStory("");
+      setImagePrompt("");
+
+      // ✅ 只给欢迎语，不主动提问
+      setChatMsgs([
+        { role: "assistant", content: "Tell me your story details. I'll ask follow‑ups if something important is missing." }
+      ]);
+    } catch {
+      setChatMsgs([{ role: "assistant", content: "Failed to load steps configuration." }]);
     }
-  }
+  })();
+}, [mode]);
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout
-    if (isRecording) {
-      interval = setInterval(() => {
-        setRecordingTime((prev) => prev + 1)
-      }, 1000)
+  const askNext = async (nextIdx: number) => {
+    if (!steps) return;
+    const step = steps[nextIdx];
+    const r = await fetch("/api/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        stepKey: step.key,
+        stepLabel: step.label,
+        required: !!step.required,
+        placeholder: step.placeholder || "",
+        collected: storyData
+      })
+    });
+    const data = await r.json();
+    setChatMsgs(m => [...m, { role:"assistant", content: data.question }]);
+  };
+
+  const sendChat = async () => {
+    if (mode !== "type" || !steps) return;
+    const val = chatInput.trim();
+    if (!val) return;
+  
+    // 显示用户消息
+    setChatMsgs(m => [...m, { role: "user", content: val }]);
+    setChatInput("");
+    setBusy(true);
+  
+    try {
+      const r = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "extract",   // 这里标识是抽取+追问
+          steps,
+          collected: storyData,
+          lastAnswer: val
+        })
+      });
+  
+      const data = await r.json();
+      if (data.updatedCollected) setStoryData(data.updatedCollected);
+  
+      if (data.done) {
+        setChatMsgs(m => [...m, { role: "assistant", content: "All required info collected. You can generate the story now." }]);
+        return;
+      }
+  
+      if (data.question) {
+        setChatMsgs(m => [...m, { role: "assistant", content: data.question }]);
+      }
+    } finally {
+      setBusy(false);
     }
-    return () => clearInterval(interval)
-  }, [isRecording])
+  };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, "0")}`
-  }
+  const generateStoryAndImage = async () => {
+    if (!steps || busy) return;
+    setBusy(true);
+    try {
+      const sr = await fetch("/api/chat", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ mode: "story", storyData })
+      });
+      const sdata = await sr.json();
+      setFinalStory(sdata.story);
 
-  if (mode === "settings") {
-    return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-2xl mx-auto">
-          <button
-            onClick={() => setMode(storyText ? "type" : "record")}
-            className="text-gray-600 hover:text-gray-800 flex items-center gap-2 mb-8"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            Back
-          </button>
-
-          <div className="bg-white rounded-2xl p-8 shadow-sm">
-            <div className="text-center mb-8">
-              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <img src="/memoryecho-logo.png" alt="MemoryEcho" className="w-6 h-6" />
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Story Settings</h1>
-              <p className="text-gray-600">Customize how your memory is shared</p>
-            </div>
-
-            <div className="space-y-8">
-              {/* Privacy Setting */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-gray-900">Privacy</h3>
-                  <p className="text-sm text-gray-600">
-                    {isPublic ? "Everyone can see this" : "Only you can see this"}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setIsPublic(!isPublic)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    isPublic ? "bg-green-500" : "bg-gray-300"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      isPublic ? "translate-x-6" : "translate-x-1"
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* Collaborative Memory */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Users className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <h3 className="font-semibold text-gray-900">Collaborative Memory</h3>
-                    <p className="text-sm text-gray-600">Share with a group</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsCollaborative(!isCollaborative)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    isCollaborative ? "bg-blue-500" : "bg-gray-300"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      isCollaborative ? "translate-x-6" : "translate-x-1"
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* Tags Section */}
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <Tag className="w-5 h-5 text-gray-400" />
-                  <h3 className="font-semibold text-gray-900">Tags</h3>
-                </div>
-
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {predefinedTags.map((tag) => (
-                    <button
-                      key={tag}
-                      onClick={() => toggleTag(tag)}
-                      className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                        selectedTags.includes(tag)
-                          ? "bg-blue-100 text-blue-700 border border-blue-200"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={customTag}
-                    onChange={(e) => setCustomTag(e.target.value)}
-                    placeholder="Add custom tag"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    onKeyPress={(e) => e.key === "Enter" && addCustomTag()}
-                  />
-                  <button
-                    onClick={addCustomTag}
-                    className="px-4 py-2 text-blue-600 hover:text-blue-700 font-medium text-sm"
-                  >
-                    Add
-                  </button>
-                </div>
-
-                {selectedTags.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {selectedTags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium flex items-center gap-1"
-                      >
-                        {tag}
-                        <button onClick={() => toggleTag(tag)} className="text-blue-500 hover:text-blue-700">
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <button
-              onClick={onBack}
-              className="w-full mt-8 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-semibold py-4 rounded-xl transition-all duration-200"
-            >
-              Continue to Verification
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (mode === "choose") {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-orange-500 flex items-center justify-center p-6">
-        <div className="max-w-md w-full text-center">
-          <button
-            onClick={onBack}
-            className="absolute top-6 left-6 text-white/80 hover:text-white flex items-center gap-2"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            Back
-          </button>
-
-          <h1 className="text-4xl font-bold text-white mb-8">Create Your Story</h1>
-          <p className="text-white/90 text-lg mb-12">How would you like to share your memory?</p>
-
-          <div className="space-y-4">
-            <button
-              onClick={() => setMode("record")}
-              className="w-full bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-semibold py-6 px-8 rounded-2xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-3"
-            >
-              <Mic className="w-6 h-6" />
-              Record Your Story
-            </button>
-
-            <button
-              onClick={() => setMode("type")}
-              className="w-full bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-semibold py-6 px-8 rounded-2xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-3"
-            >
-              <MessageCircle className="w-6 h-6" />
-              Write Your Story
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (mode === "record") {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-orange-500 flex flex-col items-center justify-center p-6">
-        <button
-          onClick={() => setMode("choose")}
-          className="absolute top-6 left-6 text-white/80 hover:text-white flex items-center gap-2"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Back
-        </button>
-
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-            <h1 className="text-3xl font-bold text-white">I'm listening...</h1>
-          </div>
-        </div>
-
-        <div className="max-w-2xl mx-auto text-center mb-16">
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 mb-8">
-            <p className="text-white text-lg leading-relaxed">
-              Share a memory that means something special to you. It could be about family, a place you've been, or a
-              moment that changed your life.
-            </p>
-          </div>
-        </div>
-
-        {/* Recording Interface */}
-        <div className="flex flex-col items-center">
-          {isRecording && (
-            <div className="mb-8">
-              <div className="text-white text-2xl font-mono">{formatTime(recordingTime)}</div>
-              <div className="flex justify-center gap-1 mt-4">
-                {[...Array(5)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="w-2 bg-white rounded-full animate-pulse"
-                    style={{
-                      height: Math.random() * 40 + 20,
-                      animationDelay: `${i * 0.1}s`,
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          <button
-            onClick={() => {
-              setIsRecording(!isRecording)
-              if (!isRecording) setRecordingTime(0)
-            }}
-            className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-200 ${
-              isRecording ? "bg-red-500 hover:bg-red-600 animate-pulse" : "bg-white hover:bg-gray-100"
-            }`}
-          >
-            {isRecording ? <Square className="w-8 h-8 text-white" /> : <Mic className="w-8 h-8 text-gray-700" />}
-          </button>
-
-          <p className="text-white/80 mt-4 text-sm">
-            {isRecording ? "Tap to stop recording" : "Tap to start recording"}
-          </p>
-
-          {recordingTime > 0 && !isRecording && (
-            <button
-              onClick={() => setMode("settings")}
-              className="mt-8 bg-white hover:bg-gray-100 text-gray-900 px-8 py-3 rounded-xl font-semibold transition-colors"
-            >
-              Save Recording
-            </button>
-          )}
-        </div>
-      </div>
-    )
-  }
-
+      const ir = await fetch("/api/images/generate", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ storyData, story: sdata.story })
+      });
+      const idata = await ir.json();
+      setImagePrompt(idata.prompt || "");
+    } finally {
+      setBusy(false);
+    }
+  };
   if (mode === "type") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-orange-500 p-6">
@@ -1111,33 +959,116 @@ const StoryCreationScreen = ({ onBack }: { onBack: () => void }) => {
             <ArrowLeft className="w-5 h-5" />
             Back
           </button>
-
+  
           <div className="bg-white rounded-2xl p-8 shadow-2xl">
-            <h1 className="text-3xl font-bold text-gray-900 mb-6">Write Your Story</h1>
-
-            <textarea
-              value={storyText}
-              onChange={(e) => setStoryText(e.target.value)}
-              placeholder="Share your memory here... What happened? How did it make you feel? What details make this story special to you?"
-              className="w-full h-96 p-6 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg leading-relaxed"
-            />
-
-            <div className="flex justify-between items-center mt-4">
-              <span className="text-gray-500 text-sm">{storyText.length} characters</span>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Write Your Story (Story Cards)
+            </h1>
+  
+            {/* Chat window */}
+            <div className="h-80 overflow-y-auto rounded border p-3 mb-3 bg-white">
+              {chatMsgs.map((m, i) => (
+                <div
+                  key={i}
+                  className={`mb-2 ${m.role === "assistant" ? "text-gray-900" : "text-blue-700"}`}
+                >
+                  <b>{m.role === "assistant" ? "AI" : "You"}:</b>{" "}
+                  <span className="whitespace-pre-wrap">{m.content}</span>
+                </div>
+              ))}
+            </div>
+  
+            {/* Input row */}
+            <div className="flex gap-2">
+              <input
+                className="flex-1 rounded border px-3 py-2"
+                placeholder={busy ? "Waiting for AI..." : "Write your story or answer AI questions"}
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && sendChat()}
+                disabled={busy}
+              />
               <button
-                onClick={() => setMode("settings")}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-semibold transition-colors"
+                className="rounded bg-black px-4 py-2 text-white disabled:opacity-50"
+                onClick={sendChat}
+                disabled={busy}
               >
-                Save Story
+                Send
+              </button>
+              <button
+                className="rounded border px-4 py-2 disabled:opacity-50"
+                onClick={generateStoryAndImage}
+                disabled={
+                  busy ||
+                  !steps?.every((s) => !s.required || storyData[s.key]?.trim())
+                }
+                title="Generate Story & Image when all required info is filled"
+              >
+                Generate Story + Image
               </button>
             </div>
+  
+            {/* Results */}
+            {finalStory && (
+              <div className="mt-6">
+                <h2 className="text-xl font-semibold mb-2">Your Story</h2>
+                <div className="prose max-w-none whitespace-pre-wrap">
+                  {finalStory}
+                </div>
+              </div>
+            )}
+  
+            {imagePrompt && (
+              <div className="mt-4">
+                <h3 className="font-medium mb-1">Image Prompt (for image models)</h3>
+                <div className="rounded border p-3 text-sm text-gray-700 bg-gray-50">
+                  {imagePrompt}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
-    )
+    );
+  }
+  if (mode === "choose") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-orange-500 flex items-center justify-center p-6">
+        <div className="max-w-md w-full text-center">
+          <button
+            onClick={onBack}
+            className="absolute top-6 left-6 text-white/80 hover:text-white flex items-center gap-2"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back
+          </button>
+  
+          <h1 className="text-4xl font-bold text-white mb-8">Create Your Story</h1>
+          <p className="text-white/90 text-lg mb-12">How would you like to share your memory?</p>
+  
+          <div className="space-y-4">
+            <button
+              onClick={() => setMode("record")}
+              className="w-full bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-semibold py-6 px-8 rounded-2xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-3"
+            >
+              <Mic className="w-6 h-6" />
+              Record Your Story
+            </button>
+  
+            <button
+              onClick={() => setMode("type")}
+              className="w-full bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-semibold py-6 px-8 rounded-2xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-3"
+            >
+              <MessageCircle className="w-6 h-6" />
+              Write Your Story
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  return null
+  return null;
 }
 
 const StoryDetailModal = ({ story, onClose }: { story: any; onClose: () => void }) => {
