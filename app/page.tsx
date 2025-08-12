@@ -24,6 +24,7 @@ import {
   AlertTriangle,
   Settings,
   Trash2,
+  Eye,
 } from "lucide-react"
 // Fixed import path for Header component
 import Header from "@/components/Header"
@@ -87,7 +88,6 @@ const ExploreScreen = ({ onStoryClick }: { onStoryClick: (story: any) => void })
         <p className="text-xl text-gray-600">Discover amazing stories brought to life with AI-generated images</p>
       </div>
 
-      {/* Category Filter Pills */}
       <div className="flex flex-wrap gap-3 mb-8">
         {categories.map((category) => (
           <button
@@ -95,7 +95,7 @@ const ExploreScreen = ({ onStoryClick }: { onStoryClick: (story: any) => void })
             onClick={() => setSelectedCategory(category)}
             className={`px-6 py-3 rounded-full font-medium transition-all duration-200 ${
               selectedCategory === category
-                ? "bg-blue-600 text-white shadow-lg"
+                ? "bg-orange-500 text-white shadow-lg"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
@@ -237,7 +237,7 @@ const MyStoriesScreen = ({ onStoryClick }: { onStoryClick: (story: any) => void 
             }}
             className={`px-6 py-2 rounded-md font-medium transition-all duration-200 ${
               privacyFilter === option
-                ? "bg-blue-600 text-white shadow-sm"
+                ? "bg-orange-600 text-white shadow-sm"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-200"
             }`}
           >
@@ -251,7 +251,7 @@ const MyStoriesScreen = ({ onStoryClick }: { onStoryClick: (story: any) => void 
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
         >
           {currentCategories.map((category) => (
             <option key={category} value={category}>
@@ -263,7 +263,7 @@ const MyStoriesScreen = ({ onStoryClick }: { onStoryClick: (story: any) => void 
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
-          className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
         >
           <option value="Most Recent">Most Recent</option>
           <option value="Most Popular">Most Popular</option>
@@ -302,7 +302,7 @@ const MyStoriesScreen = ({ onStoryClick }: { onStoryClick: (story: any) => void 
                   </div>
                 )}
                 {story.privacy === "Collaborative" && (
-                  <div className="bg-orange-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                  <div className="bg-purple-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
                     <Users className="w-3 h-3" />
                     Collaborative
                   </div>
@@ -477,7 +477,7 @@ const SettingsScreen = ({ onBack }: { onBack: () => void }) => {
                 <input
                   type="text"
                   value="john"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   readOnly
                 />
               </div>
@@ -497,7 +497,7 @@ const SettingsScreen = ({ onBack }: { onBack: () => void }) => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
                 <textarea
                   value="Memory collector and storyteller"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   rows={3}
                   readOnly
                 />
@@ -589,12 +589,12 @@ const ProfileScreen = ({
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         {/* Profile Header */}
         <div className="p-8 text-center">
-          <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center">
+          <div className="w-24 h-24 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full mx-auto mb-4 flex items-center justify-center">
             <User className="w-12 h-12 text-white" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">John</h2>
           <p className="text-gray-600 mb-4">Memory collector and story teller</p>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 mx-auto">
+          <button className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 mx-auto">
             <Share2 className="w-4 h-4" />
             Share
           </button>
@@ -653,8 +653,8 @@ const ProfileScreen = ({
             className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition-colors"
           >
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <MessageCircle className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                <MessageCircle className="w-5 h-5 text-orange-600" />
               </div>
               <div className="text-left">
                 <div className="font-medium text-gray-900">Activity Feed</div>
@@ -734,7 +734,7 @@ const ProfileScreen = ({
                         <div className="text-sm text-gray-500">marcus@example.com</div>
                       </div>
                     </div>
-                    <button className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors">
+                    <button className="px-4 py-1.5 text-sm bg-orange-600 text-white rounded-full hover:bg-orange-700 transition-colors">
                       Follow
                     </button>
                   </div>
@@ -815,11 +815,25 @@ const StoryCreationScreen = ({ onBack }: { onBack: () => void }) => {
   const [mode, setMode] = useState<"choose" | "record" | "type" | "settings">("choose")
   const [isRecording, setIsRecording] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
+  const [showWriteBox, setShowWriteBox] = useState(false)
   const [storyText, setStoryText] = useState("")
   const [isPublic, setIsPublic] = useState(true)
   const [isCollaborative, setIsCollaborative] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [customTag, setCustomTag] = useState("")
+
+  const floatingPrompts = [
+    "What made you smile today?",
+    "Who changed your life?",
+    "What's your favorite memory?",
+    "Where do you feel most at home?",
+    "What lesson did you learn?",
+    "What moment took your breath away?",
+    "Who do you miss the most?",
+    "What tradition means everything to you?",
+    "What adventure changed you?",
+    "What small moment was actually huge?",
+  ]
 
   const predefinedTags = ["nostalgia", "family", "childhood", "love", "tradition", "wisdom", "art", "memories"]
 
@@ -872,18 +886,20 @@ const StoryCreationScreen = ({ onBack }: { onBack: () => void }) => {
             </div>
 
             <div className="space-y-8">
-              {/* Privacy Setting */}
               <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-gray-900">Privacy</h3>
-                  <p className="text-sm text-gray-600">
-                    {isPublic ? "Everyone can see this" : "Only you can see this"}
-                  </p>
+                <div className="flex items-center gap-3">
+                  <Eye className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Privacy</h3>
+                    <p className="text-sm text-gray-600">
+                      {isPublic ? "Everyone can see this" : "Only you can see this"}
+                    </p>
+                  </div>
                 </div>
                 <button
                   onClick={() => setIsPublic(!isPublic)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    isPublic ? "bg-green-500" : "bg-gray-300"
+                    isPublic ? "bg-orange-500" : "bg-gray-300"
                   }`}
                 >
                   <span
@@ -906,7 +922,7 @@ const StoryCreationScreen = ({ onBack }: { onBack: () => void }) => {
                 <button
                   onClick={() => setIsCollaborative(!isCollaborative)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    isCollaborative ? "bg-blue-500" : "bg-gray-300"
+                    isCollaborative ? "bg-purple-500" : "bg-gray-300"
                   }`}
                 >
                   <span
@@ -931,7 +947,7 @@ const StoryCreationScreen = ({ onBack }: { onBack: () => void }) => {
                       onClick={() => toggleTag(tag)}
                       className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                         selectedTags.includes(tag)
-                          ? "bg-blue-100 text-blue-700 border border-blue-200"
+                          ? "bg-orange-100 text-orange-700 border border-orange-200"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                       }`}
                     >
@@ -946,12 +962,12 @@ const StoryCreationScreen = ({ onBack }: { onBack: () => void }) => {
                     value={customTag}
                     onChange={(e) => setCustomTag(e.target.value)}
                     placeholder="Add custom tag"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
                     onKeyPress={(e) => e.key === "Enter" && addCustomTag()}
                   />
                   <button
                     onClick={addCustomTag}
-                    className="px-4 py-2 text-blue-600 hover:text-blue-700 font-medium text-sm"
+                    className="px-4 py-2 text-orange-600 hover:text-orange-700 font-medium text-sm"
                   >
                     Add
                   </button>
@@ -962,10 +978,10 @@ const StoryCreationScreen = ({ onBack }: { onBack: () => void }) => {
                     {selectedTags.map((tag) => (
                       <span
                         key={tag}
-                        className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium flex items-center gap-1"
+                        className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium flex items-center gap-1"
                       >
                         {tag}
-                        <button onClick={() => toggleTag(tag)} className="text-blue-500 hover:text-blue-700">
+                        <button onClick={() => toggleTag(tag)} className="text-orange-500 hover:text-orange-700">
                           <X className="w-3 h-3" />
                         </button>
                       </span>
@@ -989,8 +1005,25 @@ const StoryCreationScreen = ({ onBack }: { onBack: () => void }) => {
 
   if (mode === "choose") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-orange-500 flex items-center justify-center p-6">
-        <div className="max-w-md w-full text-center">
+      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-orange-600 to-pink-500 flex items-center justify-center p-6 relative overflow-hidden">
+        {floatingPrompts.map((prompt, index) => (
+          <div
+            key={index}
+            className="absolute text-white/40 text-sm font-medium pointer-events-none animate-pulse"
+            style={{
+              top: `${20 + ((index * 12) % 60)}%`,
+              left: index % 2 === 0 ? `${5 + ((index * 7) % 15)}%` : `${75 + ((index * 7) % 20)}%`,
+              animationDelay: `${index * 0.5}s`,
+              animationDuration: `${3 + (index % 3)}s`,
+            }}
+          >
+            <div className="animate-bounce" style={{ animationDelay: `${index * 0.3}s` }}>
+              {prompt}
+            </div>
+          </div>
+        ))}
+
+        <div className="max-w-md w-full text-center relative z-10">
           <button
             onClick={onBack}
             className="absolute top-6 left-6 text-white/80 hover:text-white flex items-center gap-2"
@@ -999,8 +1032,11 @@ const StoryCreationScreen = ({ onBack }: { onBack: () => void }) => {
             Back
           </button>
 
-          <h1 className="text-4xl font-bold text-white mb-8">Create Your Story</h1>
-          <p className="text-white/90 text-lg mb-12">How would you like to share your memory?</p>
+          <h1 className="text-4xl font-bold text-white mb-8">Tell Your Story</h1>
+          <p className="text-white/80 text-2xl leading-relaxed mb-12">
+            Share a memory that means something special to you. It could be about family, a place you've been, or a
+            moment that changed your life.
+          </p>
 
           <div className="space-y-4">
             <button
@@ -1011,14 +1047,66 @@ const StoryCreationScreen = ({ onBack }: { onBack: () => void }) => {
               Record Your Story
             </button>
 
-            <button
-              onClick={() => setMode("type")}
-              className="w-full bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-semibold py-6 px-8 rounded-2xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-3"
-            >
-              <MessageCircle className="w-6 h-6" />
-              Write Your Story
-            </button>
+            {mode === "choose" && (
+              <>
+                {!showWriteBox ? (
+                  <button
+                    onClick={() => setShowWriteBox(true)}
+                    className="w-1/2 mx-auto bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-semibold py-4 px-8 rounded-2xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-3"
+                  >
+                    <MessageCircle className="w-6 h-6" />
+                    Write Your Story
+                  </button>
+                ) : (
+                  <div className="w-full max-w-2xl mx-auto bg-white/20 backdrop-blur-sm rounded-2xl p-6">
+                    <textarea
+                      value={storyText}
+                      onChange={(e) => setStoryText(e.target.value)}
+                      placeholder="Share your memory here..."
+                      className="w-full h-40 bg-transparent text-white placeholder-white/70 border-none outline-none resize-none text-lg"
+                      autoFocus
+                    />
+                    <div className="flex gap-3 mt-4">
+                      <button
+                        onClick={() => setShowWriteBox(false)}
+                        className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => setMode("settings")}
+                        className="px-6 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors"
+                      >
+                        Continue
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
+
+          {mode === "type" && (
+            <div className="mt-8 bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+              <textarea
+                value={storyText}
+                onChange={(e) => setStoryText(e.target.value)}
+                placeholder="Share your memory here... What happened? How did it make you feel?"
+                className="w-full h-48 p-4 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-white/50 text-white placeholder-white/70 text-lg"
+              />
+              <div className="flex justify-between items-center mt-4">
+                <button onClick={() => setMode("choose")} className="text-white/80 hover:text-white text-sm">
+                  Cancel
+                </button>
+                <button
+                  onClick={() => setMode("settings")}
+                  className="bg-white/20 hover:bg-white/30 text-white px-6 py-2 rounded-xl font-semibold transition-colors"
+                >
+                  Save Story
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     )
@@ -1026,7 +1114,7 @@ const StoryCreationScreen = ({ onBack }: { onBack: () => void }) => {
 
   if (mode === "record") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-orange-500 flex flex-col items-center justify-center p-6">
+      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-orange-600 to-pink-500 flex flex-col items-center justify-center p-6">
         <button
           onClick={() => setMode("choose")}
           className="absolute top-6 left-6 text-white/80 hover:text-white flex items-center gap-2"
@@ -1038,17 +1126,15 @@ const StoryCreationScreen = ({ onBack }: { onBack: () => void }) => {
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-2 mb-6">
             <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-            <h1 className="text-3xl font-bold text-white">I'm listening...</h1>
+            <h1 className="text-2xl font-bold text-white">I'm listening...</h1>
           </div>
         </div>
 
         <div className="max-w-2xl mx-auto text-center mb-16">
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 mb-8">
-            <p className="text-white text-lg leading-relaxed">
-              Share a memory that means something special to you. It could be about family, a place you've been, or a
-              moment that changed your life.
-            </p>
-          </div>
+          <p className="text-white/80 text-2xl leading-relaxed">
+            Share a memory that means something special to you. It could be about family, a place you've been, or a
+            moment that changed your life.
+          </p>
         </div>
 
         {/* Recording Interface */}
@@ -1102,7 +1188,7 @@ const StoryCreationScreen = ({ onBack }: { onBack: () => void }) => {
 
   if (mode === "type") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-orange-500 p-6">
+      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-orange-600 to-pink-500 p-6">
         <div className="max-w-4xl mx-auto">
           <button
             onClick={() => setMode("choose")}
@@ -1119,14 +1205,14 @@ const StoryCreationScreen = ({ onBack }: { onBack: () => void }) => {
               value={storyText}
               onChange={(e) => setStoryText(e.target.value)}
               placeholder="Share your memory here... What happened? How did it make you feel? What details make this story special to you?"
-              className="w-full h-96 p-6 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg leading-relaxed"
+              className="w-full h-96 p-6 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-orange-500 text-lg leading-relaxed"
             />
 
             <div className="flex justify-between items-center mt-4">
               <span className="text-gray-500 text-sm">{storyText.length} characters</span>
               <button
                 onClick={() => setMode("settings")}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-semibold transition-colors"
+                className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-xl font-semibold transition-colors"
               >
                 Save Story
               </button>
@@ -1295,7 +1381,7 @@ const StoryDetailModal = ({ story, onClose }: { story: any; onClose: () => void 
               <button
                 onClick={() => setIsSaved(!isSaved)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
-                  isSaved ? "bg-blue-50 text-blue-600" : "hover:bg-gray-100 text-gray-600"
+                  isSaved ? "bg-orange-50 text-orange-600" : "hover:bg-gray-100 text-gray-600"
                 }`}
               >
                 <Bookmark className={`w-5 h-5 ${isSaved ? "fill-current" : ""}`} />
@@ -1318,11 +1404,11 @@ const StoryDetailModal = ({ story, onClose }: { story: any; onClose: () => void 
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Share your thoughts..."
-                  className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-orange-500"
                   rows={3}
                 />
                 <div className="flex justify-end mt-2">
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                  <button className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
                     Post Comment
                   </button>
                 </div>
@@ -1332,7 +1418,7 @@ const StoryDetailModal = ({ story, onClose }: { story: any; onClose: () => void 
               <div className="space-y-4">
                 {comments.map((comment) => (
                   <div key={comment.id} className="flex gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
                       <User className="w-4 h-4 text-white" />
                     </div>
                     <div className="flex-1">
@@ -1369,7 +1455,7 @@ const CollectionsScreen = ({ onBack }: { onBack: () => void }) => {
             </button>
             <h1 className="text-3xl font-bold text-gray-900">Collections</h1>
           </div>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+          <button className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
             <Plus className="w-4 h-4" />
             <span>New Collection</span>
           </button>
@@ -1399,7 +1485,7 @@ const CollectionsScreen = ({ onBack }: { onBack: () => void }) => {
               </div>
               <h3 className="font-bold text-xl text-gray-900 mb-2">Family Portraits</h3>
               <p className="text-gray-600 mb-4">Professional and candid family photos</p>
-              <div className="flex items-center gap-2 text-blue-600 font-medium">
+              <div className="flex items-center gap-2 text-orange-600 font-medium">
                 <Camera className="w-4 h-4" />
                 <span>18 photos</span>
               </div>
@@ -1418,7 +1504,7 @@ const CollectionsScreen = ({ onBack }: { onBack: () => void }) => {
               </div>
               <h3 className="font-bold text-xl text-gray-900 mb-2">Travel Adventures</h3>
               <p className="text-gray-600 mb-4">Photos from our trips around the world</p>
-              <div className="flex items-center gap-2 text-blue-600 font-medium">
+              <div className="flex items-center gap-2 text-orange-600 font-medium">
                 <Camera className="w-4 h-4" />
                 <span>42 photos</span>
               </div>
@@ -1437,7 +1523,7 @@ const CollectionsScreen = ({ onBack }: { onBack: () => void }) => {
               </div>
               <h3 className="font-bold text-xl text-gray-900 mb-2">Special Occasions</h3>
               <p className="text-gray-600 mb-4">Birthdays, holidays, and celebrations</p>
-              <div className="flex items-center gap-2 text-blue-600 font-medium">
+              <div className="flex items-center gap-2 text-orange-600 font-medium">
                 <Camera className="w-4 h-4" />
                 <span>25 photos</span>
               </div>
