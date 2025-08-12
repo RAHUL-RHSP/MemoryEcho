@@ -1,607 +1,99 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Edit3 } from "lucide-react"
-import { BookOpen } from "lucide-react"
+import { useState, useEffect } from "react"
 import {
+  ArrowLeft,
+  Plus,
+  Camera,
   Heart,
   MessageCircle,
   Bookmark,
-  Home,
-  User,
-  Plus,
-  Search,
-  Mic,
-  ArrowLeft,
-  Settings,
-  ChevronRight,
+  Share2,
   Lock,
   Globe,
+  Users,
+  ChevronRight,
+  X,
+  Calendar,
+  Tag,
+  User,
+  Mic,
+  Square,
+  Shield,
+  Bell,
+  AlertTriangle,
+  Settings,
+  Trash2,
 } from "lucide-react"
+// Fixed import path for Header component
+import Header from "@/components/Header"
 
-// Mock story data
-const familyStories = [
-  {
-    id: 1,
-    title: "Childhood New Year",
-    timestamp: "2 mo. ago",
-    image: "/chinese-new-year-family.png",
-    author: "Grandma Chen",
-    description: "A heartwarming story about celebrating Chinese New Year with the family.",
-    likes: 12,
-    comments: 3,
-  },
-  {
-    id: 2,
-    title: "Grandfather at the Beach",
-    timestamp: "3 mo. ago",
-    image: "/sunset-beach-generations.png",
-    author: "Mom",
-    description: "A nostalgic tale of spending time with grandfather at the beach.",
-    likes: 12,
-    comments: 3,
-  },
-  {
-    id: 3,
-    title: "Sunday Family Dinners",
-    timestamp: "1 mo. ago",
-    image: "/placeholder-wull7.png",
-    author: "Uncle Wei",
-    description: "An account of the weekly family dinners and the love shared.",
-    likes: 12,
-    comments: 3,
-  },
-  {
-    id: 4,
-    title: "Learning to Drive with Dad",
-    timestamp: "4 mo. ago",
-    image: "/father-teenager-driving.png",
-    author: "Li Hua",
-    description: "A story about the journey of learning to drive with dad.",
-    likes: 12,
-    comments: 3,
-  },
-]
-
-const communityStories = [
-  {
-    id: 1,
-    title: "Under the Plum Tree",
-    author: "Sarah Kim",
-    category: "Family",
-    emotion: "nostalgia",
-    image: "/plum-blossoms-painting.png",
-    likes: 24,
-    comments: 8,
-  },
-  {
-    id: 2,
-    title: "Arriving in Aotearoa",
-    author: "James Patel",
-    category: "Migration",
-    emotion: "first time",
-    image: "/new-zealand-arrival-artistic.png",
-    likes: 31,
-    comments: 12,
-  },
-  {
-    id: 3,
-    title: "Making Noodles Together",
-    author: "Maria Chen",
-    category: "Food",
-    emotion: "love",
-    image: "/grandmother-child-noodles.png",
-    likes: 18,
-    comments: 5,
-  },
-  {
-    id: 4,
-    title: "Walking to School in the Rain",
-    author: "David Wong",
-    category: "Family",
-    emotion: "childhood",
-    image: "/watercolor-rainy-school-walk.png",
-    likes: 42,
-    comments: 15,
-  },
-]
-
-function ExploreScreen({ onNavigate }: { onNavigate: (screen: string) => void }) {
-  const [activeCategory, setActiveCategory] = useState("All")
-  const categories = ["All", "Family", "Migration", "Food", "Daily Life", "Adventure", "Romance", "Mystery"]
-
-  const filteredStories =
-    activeCategory === "All" ? communityStories : communityStories.filter((story) => story.category === activeCategory)
-
-  return (
-    <div className="flex-1 p-8">
-      <div className="max-w-6xl mx-auto">
-        <div>
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">Explore Stories</h2>
-            <p className="text-gray-600">Discover amazing stories brought to life with AI-generated images</p>
-          </div>
-
-          <div className="flex gap-3 mb-8 overflow-x-auto pb-2">
-            {categories.map((category) => (
-              <button
-                key={category}
-                className={`px-6 py-2 rounded-full whitespace-nowrap transition-colors font-medium ${
-                  activeCategory === category ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-                onClick={() => setActiveCategory(category)}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredStories.map((story, index) => (
-              <div
-                key={index}
-                className="relative group cursor-pointer rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 aspect-[4/3]"
-              >
-                <img
-                  src={story.image || "/placeholder.svg"}
-                  alt={story.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                <div className="absolute top-4 left-4">
-                  <span className="bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium">
-                    {story.emotion}
-                  </span>
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                  <h3 className="text-xl font-bold mb-2">{story.title}</h3>
-                  <p className="text-sm text-white/80 mb-3">by {story.author}</p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <button className="flex items-center gap-1 hover:text-red-400 transition-colors">
-                        <Heart className="w-5 h-5" />
-                        <span className="text-sm">{story.likes}</span>
-                      </button>
-                      <button className="flex items-center gap-1 hover:text-blue-400 transition-colors">
-                        <MessageCircle className="w-5 h-5" />
-                        <span className="text-sm">{story.comments}</span>
-                      </button>
-                    </div>
-                    <button className="hover:text-yellow-400 transition-colors">
-                      <Bookmark className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function CreateStoryScreen({ onNavigate }: { onNavigate: (screen: string) => void }) {
-  const [isRecording, setIsRecording] = useState(false)
-  const [creationMode, setCreationMode] = useState<"choose" | "record" | "type">("choose")
-  const [storyText, setStoryText] = useState("")
-
-  return (
-    <div className="flex-1 flex items-center justify-center p-8">
-      <div className="max-w-2xl mx-auto text-center">
-        <button
-          onClick={() => onNavigate("home")}
-          className="absolute top-8 left-8 p-2 rounded-full hover:bg-white/20 transition-colors"
-        >
-          <ArrowLeft className="w-6 h-6 text-gray-600" />
-        </button>
-
-        {creationMode === "choose" && (
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-8">Create Your Story</h1>
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 mb-8 shadow-lg">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Tell me about your story</h2>
-              <p className="text-gray-600 leading-relaxed mb-6">Share your memories and experiences.</p>
-            </div>
-
-            <div className="flex gap-6 justify-center">
-              <button
-                className="flex flex-col items-center gap-4 p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all"
-                onClick={() => setCreationMode("record")}
-              >
-                <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center">
-                  <Mic className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-800 mb-2">Record Your Story</h3>
-                  <p className="text-gray-600 text-sm">Speak naturally and let us capture your voice</p>
-                </div>
-              </button>
-
-              <button
-                className="flex flex-col items-center gap-4 p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all"
-                onClick={() => setCreationMode("type")}
-              >
-                <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center">
-                  <Edit3 className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-800 mb-2">Write Your Story</h3>
-                  <p className="text-gray-600 text-sm">Type out your story at your own pace</p>
-                </div>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {creationMode === "record" && (
-          <div>
-            <button
-              onClick={() => setCreationMode("choose")}
-              className="absolute top-20 left-8 p-2 rounded-full hover:bg-white/20 transition-colors"
-            >
-              <ArrowLeft className="w-6 h-6 text-gray-600" />
-            </button>
-
-            <div className="mb-8">
-              <h1
-                className={`text-2xl font-semibold mb-8 transition-all duration-500 ${
-                  isRecording ? "animate-pulse text-purple-600" : "text-gray-800"
-                }`}
-              >
-                {isRecording ? "I'm listening..." : "Ready to record"}
-              </h1>
-            </div>
-
-            <div className="relative">
-              <button
-                className={`w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg ${
-                  isRecording ? "bg-red-500 hover:bg-red-600 animate-pulse" : "bg-purple-500 hover:bg-purple-600"
-                }`}
-                onClick={() => setIsRecording(!isRecording)}
-              >
-                <Mic className="w-8 h-8 text-white" />
-              </button>
-
-              {isRecording && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-32 h-32 rounded-full border-4 border-red-300 animate-ping opacity-30" />
-                </div>
-              )}
-            </div>
-
-            {isRecording && (
-              <div className="mt-8 flex items-center justify-center gap-2">
-                <div className="flex gap-1">
-                  {[...Array(20)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="w-1 bg-purple-400 rounded-full animate-pulse"
-                      style={{
-                        height: `${Math.random() * 40 + 10}px`,
-                        animationDelay: `${i * 0.1}s`,
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {creationMode === "type" && (
-          <div>
-            <button
-              onClick={() => setCreationMode("choose")}
-              className="absolute top-20 left-8 p-2 rounded-full hover:bg-white/20 transition-colors"
-            >
-              <ArrowLeft className="w-6 h-6 text-gray-600" />
-            </button>
-
-            <h1 className="text-2xl font-semibold mb-8 text-gray-800">Write Your Story</h1>
-
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 mb-8 shadow-lg text-left">
-              <textarea
-                value={storyText}
-                onChange={(e) => setStoryText(e.target.value)}
-                placeholder="Start writing your story here..."
-                className="w-full h-64 p-4 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-
-              <div className="flex justify-between items-center mt-4">
-                <span className="text-sm text-gray-500">{storyText.length} characters</span>
-                <Button className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2">Save Story</Button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function ActivityScreen({ onNavigate }: { onNavigate: (screen: string) => void }) {
-  return (
-    <div className="flex-1 p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Activity Feed</h1>
-          <p className="text-gray-600">Stay updated with your family's story sharing</p>
-        </div>
-
-        <div className="space-y-6">
-          <Card className="p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center flex-shrink-0">
-                <Heart className="w-6 h-6 text-white" />
-              </div>
-              <div className="flex-1">
-                <p className="font-medium text-gray-800 mb-1">
-                  <span className="font-semibold">Sarah Kim</span> liked your story "Grandfather's Painting"
-                </p>
-                <p className="text-sm text-gray-600 mb-3">2 hours ago</p>
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-sm text-gray-700">"Such a beautiful memory! My grandfather was also an artist."</p>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center flex-shrink-0">
-                <MessageCircle className="w-6 h-6 text-white" />
-              </div>
-              <div className="flex-1">
-                <p className="font-medium text-gray-800 mb-1">
-                  <span className="font-semibold">James Patel</span> commented on "Family Dinner Traditions"
-                </p>
-                <p className="text-sm text-gray-600 mb-3">5 hours ago</p>
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-sm text-gray-700">
-                    "This reminds me of our Sunday gatherings. Thank you for sharing!"
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center flex-shrink-0">
-                <Plus className="w-6 h-6 text-white" />
-              </div>
-              <div className="flex-1">
-                <p className="font-medium text-gray-800 mb-1">
-                  <span className="font-semibold">Maria Chen</span> shared a new story "Making Noodles Together"
-                </p>
-                <p className="text-sm text-gray-600">1 day ago</p>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ProfileScreen({ onNavigate }: { onNavigate: (screen: string) => void }) {
-  return (
-    <div className="flex-1 p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex gap-8">
-          {/* Profile sidebar */}
-          <div className="w-80 flex-shrink-0">
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <div className="text-center mb-6">
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 mx-auto mb-4 flex items-center justify-center">
-                  <span className="text-white text-2xl font-bold">LH</span>
-                </div>
-                <h2 className="text-xl font-bold text-gray-800">Li Hua</h2>
-                <p className="text-gray-600">lihua@memoryecho.com</p>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4 mb-6 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-gray-800">28</div>
-                  <div className="text-sm text-gray-600">Memories</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-gray-800">76</div>
-                  <div className="text-sm text-gray-600">Followers</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-gray-800">112</div>
-                  <div className="text-sm text-gray-600">Following</div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <Home className="w-5 h-5 text-gray-600" />
-                    <span className="font-medium text-gray-800">My Stories</span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
-                </button>
-                <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <Bookmark className="w-5 h-5 text-gray-600" />
-                    <span className="font-medium text-gray-800">Collections</span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
-                </button>
-                <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <Settings className="w-5 h-5 text-gray-600" />
-                    <span className="font-medium text-gray-800">Settings</span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
-                </button>
-                <button
-                  className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
-                  onClick={() => onNavigate("verification")}
-                >
-                  <div className="flex items-center gap-3">
-                    <User className="w-5 h-5 text-gray-600" />
-                    <span className="font-medium text-gray-800">Verify Identity</span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Main content area */}
-          <div className="flex-1">
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h3 className="text-xl font-bold text-gray-800 mb-6">Recent Activity</h3>
-              <div className="space-y-4">
-                <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-                  <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <Heart className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-800">
-                      Your story "Grandfather's Painting" received 12 new likes
-                    </p>
-                    <p className="text-sm text-gray-600">2 hours ago</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-                  <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
-                    <MessageCircle className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-800">New comment on "Family Dinner Traditions"</p>
-                    <p className="text-sm text-gray-600">5 hours ago</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function VerificationScreen({ onNavigate }: { onNavigate: (screen: string) => void }) {
-  return (
-    <div className="flex-1 flex items-center justify-center p-8">
-      <div className="max-w-md mx-auto text-center">
-        <button
-          onClick={() => onNavigate("profile")}
-          className="absolute top-8 left-8 p-2 rounded-full hover:bg-white/20 transition-colors"
-        >
-          <ArrowLeft className="w-6 h-6 text-gray-600" />
-        </button>
-
-        <div className="bg-white rounded-2xl p-8 shadow-lg">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 mx-auto mb-6 flex items-center justify-center">
-            <User className="w-8 h-8 text-white" />
-          </div>
-
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Verify Your Identity</h1>
-          <p className="text-gray-600 mb-8">
-            Help us keep MemoryEcho safe by verifying your identity. This helps build trust in our community.
-          </p>
-
-          <div className="space-y-4 mb-8">
-            <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                <span className="text-green-600 font-bold">✓</span>
-              </div>
-              <span className="text-gray-700">Email verified</span>
-            </div>
-            <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-              <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center">
-                <span className="text-yellow-600 font-bold">!</span>
-              </div>
-              <span className="text-gray-700">Phone verification pending</span>
-            </div>
-          </div>
-
-          <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white py-3 rounded-xl font-semibold">
-            Continue Verification
-          </Button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function MyStoriesScreen({ onNavigate }: { onNavigate: (screen: string) => void }) {
+// Define all screen components inline instead of importing from separate files
+const ExploreScreen = ({ onStoryClick }: { onStoryClick: (story: any) => void }) => {
   const [selectedCategory, setSelectedCategory] = useState("All")
-  const [privacyFilter, setPrivacyFilter] = useState<"All" | "Public" | "Private">("All")
 
-  const categories = ["All", "Family", "Migration", "Food", "Daily Life", "Adventure", "Romance", "Mystery"]
-
-  const myStories = [
+  const stories = [
     {
       id: 1,
-      title: "My Secret Garden",
-      author: "You",
-      image: "/secret-garden.png",
-      tag: "secret",
-      likes: 0,
-      comments: 0,
-      category: "Daily Life",
-      isPrivate: true,
+      title: "Under the Plum Tree",
+      author: "Maria Chen",
+      image: "/plum-blossoms-painting.png",
+      tag: "nostalgia",
+      likes: 24,
+      comments: 8,
+      category: "Family",
     },
     {
       id: 2,
-      title: "The Letter I Never Sent",
-      author: "You",
-      image: "/autumn-forest-path.png",
-      tag: "emotion",
-      likes: 0,
-      comments: 0,
-      category: "Romance",
-      isPrivate: false,
+      title: "Arriving in Aotearoa",
+      author: "James Wilson",
+      image: "/new-zealand-arrival-artistic.png",
+      tag: "first time",
+      likes: 31,
+      comments: 12,
+      category: "Migration",
+    },
+    {
+      id: 3,
+      title: "Making Noodles Together",
+      author: "Li Wei",
+      image: "/grandmother-child-noodles.png",
+      tag: "love",
+      likes: 45,
+      comments: 15,
+      category: "Food",
+    },
+    {
+      id: 4,
+      title: "Walking to School in the Rain",
+      author: "Sarah Johnson",
+      image: "/watercolor-rainy-school-walk.png",
+      tag: "adventure",
+      likes: 18,
+      comments: 6,
+      category: "Daily Life",
     },
   ]
 
-  const filteredStories = myStories.filter((story) => {
-    const categoryMatch = selectedCategory === "All" || story.category === selectedCategory
-    const privacyMatch =
-      privacyFilter === "All" ||
-      (privacyFilter === "Private" && story.isPrivate) ||
-      (privacyFilter === "Public" && !story.isPrivate)
-    return categoryMatch && privacyMatch
-  })
+  const categories = ["All", "Family", "Migration", "Food", "Daily Life", "Adventure", "Romance", "Mystery"]
+
+  const filteredStories =
+    selectedCategory === "All" ? stories : stories.filter((story) => story.category === selectedCategory)
 
   return (
-    <main className="flex-1 max-w-7xl mx-auto px-8 py-8">
+    <div className="max-w-7xl mx-auto px-6 py-8">
       <div className="mb-8">
-        <h2 className="text-4xl font-bold text-gray-900 mb-2">My Stories</h2>
-        <p className="text-gray-600 text-lg">Your personal collection of stories and generated images</p>
+        <h1 className="text-4xl font-bold text-gray-900 mb-4">Explore Stories</h1>
+        <p className="text-xl text-gray-600">Discover amazing stories brought to life with AI-generated images</p>
       </div>
 
-      <div className="flex gap-3 mb-6">
-        {(["All", "Public", "Private"] as const).map((filter) => (
-          <button
-            key={filter}
-            onClick={() => setPrivacyFilter(filter)}
-            className={`px-6 py-2 rounded-full transition-all duration-200 font-medium ${
-              privacyFilter === filter
-                ? "bg-purple-600 text-white shadow-lg"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            {filter}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex gap-3 mb-8 overflow-x-auto pb-2">
+      {/* Category Filter Pills */}
+      <div className="flex flex-wrap gap-3 mb-8">
         {categories.map((category) => (
           <button
             key={category}
             onClick={() => setSelectedCategory(category)}
-            className={`px-6 py-2 rounded-full whitespace-nowrap transition-all duration-200 ${
+            className={`px-6 py-3 rounded-full font-medium transition-all duration-200 ${
               selectedCategory === category
                 ? "bg-blue-600 text-white shadow-lg"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -612,57 +104,234 @@ function MyStoriesScreen({ onNavigate }: { onNavigate: (screen: string) => void 
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {/* Stories Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {filteredStories.map((story) => (
-          <div key={story.id} className="group cursor-pointer">
-            <div className="relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-              <div className="relative h-64 overflow-hidden">
-                <img
-                  src={story.image || "/placeholder.svg"}
-                  alt={story.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-
-                <div className="absolute top-3 right-3">
-                  {story.isPrivate ? (
-                    <div className="bg-red-500/80 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-                      <Lock className="w-3 h-3" />
-                      Private
-                    </div>
-                  ) : (
-                    <div className="bg-green-500/80 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-                      <Globe className="w-3 h-3" />
-                      Public
-                    </div>
-                  )}
-                </div>
-
-                <div className="absolute top-3 left-3">
-                  <span className="bg-black/30 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium">
-                    {story.tag}
-                  </span>
-                </div>
-
-                <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                  <h3 className="text-xl font-bold mb-1">{story.title}</h3>
-                  <p className="text-gray-200 text-sm mb-3">{story.author}</p>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <button className="flex items-center gap-1 hover:text-red-400 transition-colors">
-                        <Heart className="w-5 h-5" />
-                        <span className="text-sm">{story.likes}</span>
-                      </button>
-                      <button className="flex items-center gap-1 hover:text-blue-400 transition-colors">
-                        <MessageCircle className="w-5 h-5" />
-                        <span className="text-sm">{story.comments}</span>
-                      </button>
-                    </div>
-                    <button className="hover:text-yellow-400 transition-colors">
-                      <Bookmark className="w-5 h-5" />
-                    </button>
+          <div
+            key={story.id}
+            onClick={() => onStoryClick(story)}
+            className="group cursor-pointer bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]"
+          >
+            <div className="relative h-80">
+              <img
+                src={story.image || "/placeholder.svg"}
+                alt={story.title}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              <div className="absolute top-4 left-4">
+                <span className="bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium">
+                  {story.tag}
+                </span>
+              </div>
+              <div className="absolute bottom-4 left-4 right-4">
+                <h3 className="text-white text-2xl font-bold mb-2">{story.title}</h3>
+                <p className="text-white/90 text-sm mb-3">{story.author}</p>
+                <div className="flex items-center gap-4 text-white/80">
+                  <div className="flex items-center gap-1">
+                    <Heart className="w-4 h-4" />
+                    <span className="text-sm">{story.likes}</span>
                   </div>
+                  <div className="flex items-center gap-1">
+                    <MessageCircle className="w-4 h-4" />
+                    <span className="text-sm">{story.comments}</span>
+                  </div>
+                  <Bookmark className="w-4 h-4 ml-auto" />
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+const MyStoriesScreen = ({ onStoryClick }: { onStoryClick: (story: any) => void }) => {
+  const [privacyFilter, setPrivacyFilter] = useState("All")
+  const [categoryFilter, setCategoryFilter] = useState("All Categories")
+  const [sortBy, setSortBy] = useState("Most Recent")
+
+  const myStories = [
+    {
+      id: 1,
+      title: "My Secret Garden",
+      author: "You",
+      image: "/secret-garden.png",
+      tag: "secret",
+      likes: 0,
+      comments: 0,
+      privacy: "Private",
+      category: "Family",
+      date: "2024/1/12",
+    },
+    {
+      id: 2,
+      title: "The Letter I Never Sent",
+      author: "You",
+      image: "/autumn-forest-path.png",
+      tag: "emotion",
+      likes: 0,
+      comments: 0,
+      privacy: "Public",
+      category: "Family",
+      date: "2024/1/10",
+    },
+    {
+      id: 3,
+      title: "Family Reunion Memories",
+      author: "You",
+      image: "/chinese-new-year-family.png",
+      tag: "celebration",
+      likes: 5,
+      comments: 2,
+      privacy: "Collaborative",
+      category: "Family",
+      date: "2024/1/8",
+    },
+    {
+      id: 4,
+      title: "Weekend Adventures",
+      author: "You",
+      image: "/sunset-beach-generations.png",
+      tag: "adventure",
+      likes: 3,
+      comments: 1,
+      privacy: "Collaborative",
+      category: "Adventure",
+      date: "2024/1/5",
+    },
+  ]
+
+  const privacyOptions = ["All", "Public", "Private", "Collaborative"]
+  const regularCategories = [
+    "All Categories",
+    "Family",
+    "Migration",
+    "Food",
+    "Daily Life",
+    "Adventure",
+    "Romance",
+    "Mystery",
+  ]
+  const collaborativeCategories = ["All Categories", "Family", "Friends"]
+
+  const currentCategories = privacyFilter === "Collaborative" ? collaborativeCategories : regularCategories
+
+  const filteredStories = myStories.filter((story) => {
+    const matchesPrivacy = privacyFilter === "All" || story.privacy === privacyFilter
+    const matchesCategory = categoryFilter === "All Categories" || story.category === categoryFilter
+    return matchesPrivacy && matchesCategory
+  })
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-8">
+      {/* Privacy Filter Tabs */}
+      <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
+        {privacyOptions.map((option) => (
+          <button
+            key={option}
+            onClick={() => {
+              setPrivacyFilter(option)
+              setCategoryFilter("All Categories")
+            }}
+            className={`px-6 py-2 rounded-md font-medium transition-all duration-200 ${
+              privacyFilter === option
+                ? "bg-blue-600 text-white shadow-sm"
+                : "text-gray-600 hover:text-gray-900 hover:bg-gray-200"
+            }`}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
+
+      {/* Filter Dropdowns */}
+      <div className="flex gap-4 mb-8">
+        <select
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+        >
+          {currentCategories.map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+        >
+          <option value="Most Recent">Most Recent</option>
+          <option value="Most Popular">Most Popular</option>
+          <option value="Alphabetical">Alphabetical</option>
+        </select>
+      </div>
+
+      {/* Stories Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredStories.map((story) => (
+          <div
+            key={story.id}
+            onClick={() => onStoryClick(story)}
+            className="group cursor-pointer bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200"
+          >
+            <div className="relative h-64">
+              <img
+                src={story.image || "/placeholder.svg"}
+                alt={story.title}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+              {/* Privacy Badge */}
+              <div className="absolute top-3 right-3">
+                {story.privacy === "Private" && (
+                  <div className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                    <Lock className="w-3 h-3" />
+                    Private
+                  </div>
+                )}
+                {story.privacy === "Public" && (
+                  <div className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                    <Globe className="w-3 h-3" />
+                    Public
+                  </div>
+                )}
+                {story.privacy === "Collaborative" && (
+                  <div className="bg-orange-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                    <Users className="w-3 h-3" />
+                    Collaborative
+                  </div>
+                )}
+              </div>
+
+              {/* Story Tag */}
+              <div className="absolute top-3 left-3">
+                <span className="bg-white/20 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-medium">
+                  {story.tag}
+                </span>
+              </div>
+
+              {/* Story Info */}
+              <div className="absolute bottom-3 left-3 right-3">
+                <h3 className="text-white text-lg font-bold mb-1">{story.title}</h3>
+                <p className="text-white/90 text-sm mb-2">{story.author}</p>
+                <div className="flex items-center justify-between text-white/80">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1">
+                      <Heart className="w-4 h-4" />
+                      <span className="text-sm">{story.likes}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <MessageCircle className="w-4 h-4" />
+                      <span className="text-sm">{story.comments}</span>
+                    </div>
+                  </div>
+                  <Bookmark className="w-4 h-4" />
                 </div>
               </div>
             </div>
@@ -671,114 +340,1194 @@ function MyStoriesScreen({ onNavigate }: { onNavigate: (screen: string) => void 
       </div>
 
       {filteredStories.length === 0 && (
-        <div className="text-center py-16">
-          <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <BookOpen className="w-12 h-12 text-gray-400" />
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">No stories yet</h3>
-          <p className="text-gray-600 mb-6">Start creating your first story to see it here</p>
-          <button
-            onClick={() => onNavigate("create")}
-            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-200 flex items-center gap-2 mx-auto font-medium"
-          >
-            <Plus className="w-5 h-5" />
-            Create Your First Story
-          </button>
+        <div className="text-center py-12">
+          <p className="text-gray-500 text-lg">No stories found matching your filters.</p>
         </div>
       )}
-    </main>
+    </div>
   )
 }
 
-export default function HomePage() {
-  const [currentScreen, setCurrentScreen] = useState("home")
-  const [searchQuery, setSearchQuery] = useState("")
-
-  const handleNavigate = (screen: string) => {
-    setCurrentScreen(screen)
-  }
+const ActivityScreen = ({ onBack }: { onBack: () => void }) => {
+  const activities = [
+    {
+      id: 1,
+      user: "Sarah Chen",
+      avatar: "/placeholder.svg?height=40&width=40",
+      action: "shared 5 new photos from their trip to Japan",
+      time: "2h ago",
+      likes: 24,
+      comments: 8,
+      type: "photos",
+    },
+    {
+      id: 2,
+      user: "Marcus Johnson",
+      avatar: "/placeholder.svg?height=40&width=40",
+      action: "created a new story 'Wedding Season 2024'",
+      time: "4h ago",
+      likes: 18,
+      comments: 3,
+      type: "story",
+    },
+    {
+      id: 3,
+      user: "Emma Rodriguez",
+      avatar: "/placeholder.svg?height=40&width=40",
+      action: "added photos to 'Family Traditions' collection",
+      time: "6h ago",
+      likes: 12,
+      comments: 2,
+      type: "collection",
+      images: ["/placeholder.svg?height=100&width=100", "/placeholder.svg?height=100&width=100"],
+    },
+  ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-purple-50 flex flex-col">
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-8 py-4">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-orange-600 rounded-lg flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-white" />
+    <div className="max-w-2xl mx-auto px-6 py-8">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {/* Header */}
+        <div className="p-6 border-b border-gray-100">
+          <div className="flex items-center gap-4">
+            <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <ArrowLeft className="w-5 h-5 text-gray-600" />
+            </button>
+            <h1 className="text-xl font-semibold text-gray-900">Activity</h1>
+          </div>
+        </div>
+
+        {/* Activity Feed */}
+        <div className="divide-y divide-gray-100">
+          {activities.map((activity) => (
+            <div key={activity.id} className="p-6">
+              <div className="flex gap-4">
+                <img
+                  src={activity.avatar || "/placeholder.svg"}
+                  alt={activity.user}
+                  className="w-10 h-10 rounded-full"
+                />
+                <div className="flex-1">
+                  <div className="mb-3">
+                    <span className="font-medium text-gray-900">{activity.user}</span>
+                    <span className="text-gray-600 ml-1">{activity.action}</span>
+                  </div>
+
+                  {activity.type === "collection" && activity.images && (
+                    <div className="flex gap-2 mb-4">
+                      {activity.images.map((img, idx) => (
+                        <img
+                          key={idx}
+                          src={img || "/placeholder.svg"}
+                          alt="Collection preview"
+                          className="w-20 h-20 rounded-lg object-cover"
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-6 text-sm text-gray-500">
+                    <div className="flex items-center gap-1">
+                      <Heart className="w-4 h-4" />
+                      <span>{activity.likes}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <MessageCircle className="w-4 h-4" />
+                      <span>{activity.comments}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Share2 className="w-4 h-4" />
+                    </div>
+                    <span className="ml-auto">{activity.time}</span>
+                  </div>
+                </div>
               </div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-purple-600 bg-clip-text text-transparent">
-                MemoryEcho
-              </h1>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const SettingsScreen = ({ onBack }: { onBack: () => void }) => {
+  return (
+    <div className="max-w-2xl mx-auto px-6 py-8">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {/* Header */}
+        <div className="p-6 border-b border-gray-100">
+          <div className="flex items-center gap-4">
+            <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <ArrowLeft className="w-5 h-5 text-gray-600" />
+            </button>
+            <h1 className="text-xl font-semibold text-gray-900">Settings</h1>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-8">
+          {/* Profile Information */}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <User className="w-5 h-5 text-gray-600" />
+              <h2 className="text-lg font-medium text-gray-900">Profile Information</h2>
             </div>
 
-            {/* Navigation Tabs */}
-            <nav className="flex items-center gap-8">
-              <button
-                className={`px-4 py-2 text-lg font-medium transition-colors relative ${
-                  currentScreen === "home" ? "text-blue-600" : "text-gray-600 hover:text-gray-800"
-                }`}
-                onClick={() => handleNavigate("home")}
-              >
-                Explore
-                {currentScreen === "home" && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full" />
-                )}
-              </button>
-              <button
-                className={`px-4 py-2 text-lg font-medium transition-colors relative ${
-                  currentScreen === "mystories" ? "text-blue-600" : "text-gray-600 hover:text-gray-800"
-                }`}
-                onClick={() => setCurrentScreen("mystories")}
-              >
-                My Stories
-                {currentScreen === "mystories" && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full" />
-                )}
-              </button>
-            </nav>
-
-            {/* Search Bar */}
-            <div className="flex-1 max-w-md mx-8">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                 <input
                   type="text"
-                  placeholder="Search stories..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                  value="john"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  readOnly
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value="john@gmail.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                  readOnly
+                />
+                <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                <textarea
+                  value="Memory collector and storyteller"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows={3}
+                  readOnly
+                />
+              </div>
+
+              <button className="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Edit Profile
+              </button>
+            </div>
+          </div>
+
+          {/* Privacy & Security */}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <Shield className="w-5 h-5 text-gray-600" />
+              <h2 className="text-lg font-medium text-gray-900">Privacy & Security</h2>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm text-gray-700 mb-3">
+                Your profile is currently public. Other users can view your photos and follow you.
+              </p>
+              <button className="text-sm text-gray-500 flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                Privacy Settings (Coming Soon)
+              </button>
+            </div>
+          </div>
+
+          {/* Notifications */}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <Bell className="w-5 h-5 text-gray-600" />
+              <h2 className="text-lg font-medium text-gray-900">Notifications</h2>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm text-gray-700 mb-3">Manage your notification preferences.</p>
+              <button className="text-sm text-gray-500 flex items-center gap-2">
+                <Bell className="w-4 h-4" />
+                Notification Settings (Coming Soon)
+              </button>
+            </div>
+          </div>
+
+          {/* Danger Zone */}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+              <h2 className="text-lg font-medium text-red-600">Danger Zone</h2>
+            </div>
+
+            <div className="border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-gray-700 mb-4">
+                Once you delete your account, there is no going back. Please be certain.
+              </p>
+              <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
+                <Trash2 className="w-4 h-4" />
+                Delete Account
+              </button>
+            </div>
+          </div>
+
+          {/* Sign Out */}
+          <div className="pt-4 border-t border-gray-200">
+            <button className="text-gray-600 hover:text-gray-800 font-medium transition-colors">Sign Out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const ProfileScreen = ({
+  onCollectionsClick,
+  onActivityClick,
+  onSettingsClick,
+}: {
+  onCollectionsClick: () => void
+  onActivityClick: () => void
+  onSettingsClick: () => void
+}) => {
+  const [showFollowersModal, setShowFollowersModal] = useState(false)
+  const [followersModalType, setFollowersModalType] = useState<"followers" | "following">("followers")
+
+  return (
+    <div className="max-w-2xl mx-auto px-6 py-12">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {/* Profile Header */}
+        <div className="p-8 text-center">
+          <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center">
+            <User className="w-12 h-12 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">John</h2>
+          <p className="text-gray-600 mb-4">Memory collector and story teller</p>
+          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 mx-auto">
+            <Share2 className="w-4 h-4" />
+            Share
+          </button>
+        </div>
+
+        {/* Stats */}
+        <div className="px-8 pb-6">
+          <div className="flex justify-center gap-8 text-center">
+            <div>
+              <div className="text-2xl font-bold text-gray-900">0</div>
+              <div className="text-sm text-gray-600">Memories</div>
+            </div>
+            <div
+              className="cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+              onClick={() => {
+                setFollowersModalType("followers")
+                setShowFollowersModal(true)
+              }}
+            >
+              <div className="text-2xl font-bold text-gray-900">76</div>
+              <div className="text-sm text-gray-600">Followers</div>
+            </div>
+            <div
+              className="cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+              onClick={() => {
+                setFollowersModalType("following")
+                setShowFollowersModal(true)
+              }}
+            >
+              <div className="text-2xl font-bold text-gray-900">112</div>
+              <div className="text-sm text-gray-600">Following</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Menu Items */}
+        <div className="border-t border-gray-100">
+          <button
+            onClick={onCollectionsClick}
+            className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition-colors"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                <Camera className="w-5 h-5 text-orange-600" />
+              </div>
+              <div className="text-left">
+                <div className="font-medium text-gray-900">Collections</div>
+                <div className="text-sm text-gray-600">Organize photos into collections</div>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400" />
+          </button>
+
+          <button
+            onClick={onActivityClick}
+            className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition-colors"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <MessageCircle className="w-5 h-5 text-blue-600" />
+              </div>
+              <div className="text-left">
+                <div className="font-medium text-gray-900">Activity Feed</div>
+                <div className="text-sm text-gray-600">See what people you follow are sharing</div>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400" />
+          </button>
+
+          <button
+            onClick={onSettingsClick}
+            className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition-colors"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                <User className="w-5 h-5 text-gray-600" />
+              </div>
+              <div className="text-left">
+                <div className="font-medium text-gray-900">Settings</div>
+                <div className="text-sm text-gray-600">Account and privacy settings</div>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
+
+        {/* Sign Out */}
+        <div className="border-t border-gray-100 p-6">
+          <button className="text-red-600 hover:text-red-700 font-medium transition-colors">Sign Out</button>
+        </div>
+      </div>
+
+      {/* Followers/Following Modal */}
+      {showFollowersModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg w-full max-w-md mx-4 max-h-[80vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold text-gray-900">
+                {followersModalType === "followers" ? "Followers" : "Following"}
+              </h2>
+              <button
+                onClick={() => setShowFollowersModal(false)}
+                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="overflow-y-auto max-h-[60vh]">
+              {followersModalType === "followers" ? (
+                // Followers List
+                <div className="p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center">
+                        <span className="text-white font-medium text-sm">SC</span>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">Sarah Chen</div>
+                        <div className="text-sm text-gray-500">sarah@memoryecho.com</div>
+                      </div>
+                    </div>
+                    <button className="px-4 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors">
+                      Unfollow
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center">
+                        <span className="text-white font-medium text-sm">MJ</span>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">Marcus Johnson</div>
+                        <div className="text-sm text-gray-500">marcus@example.com</div>
+                      </div>
+                    </div>
+                    <button className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors">
+                      Follow
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-teal-500 rounded-full flex items-center justify-center">
+                        <span className="text-white font-medium text-sm">DK</span>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">David Kim</div>
+                        <div className="text-sm text-gray-500">david@example.com</div>
+                      </div>
+                    </div>
+                    <button className="px-4 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors">
+                      Unfollow
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                // Following List
+                <div className="p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center">
+                        <span className="text-white font-medium text-sm">ER</span>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">Emma Rodriguez</div>
+                        <div className="text-sm text-gray-500">emma@memoryecho.com</div>
+                      </div>
+                    </div>
+                    <button className="px-4 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors">
+                      Unfollow
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center">
+                        <span className="text-white font-medium text-sm">AL</span>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">Alex Liu</div>
+                        <div className="text-sm text-gray-500">alex@example.com</div>
+                      </div>
+                    </div>
+                    <button className="px-4 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors">
+                      Unfollow
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                        <span className="text-white font-medium text-sm">JW</span>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">Jessica Wang</div>
+                        <div className="text-sm text-gray-500">jessica@memoryecho.com</div>
+                      </div>
+                    </div>
+                    <button className="px-4 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors">
+                      Unfollow
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+const StoryCreationScreen = ({ onBack }: { onBack: () => void }) => {
+  const [mode, setMode] = useState<"choose" | "record" | "type" | "settings">("choose")
+  const [isRecording, setIsRecording] = useState(false)
+  const [recordingTime, setRecordingTime] = useState(0)
+  const [storyText, setStoryText] = useState("")
+  const [isPublic, setIsPublic] = useState(true)
+  const [isCollaborative, setIsCollaborative] = useState(false)
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [customTag, setCustomTag] = useState("")
+
+  const predefinedTags = ["nostalgia", "family", "childhood", "love", "tradition", "wisdom", "art", "memories"]
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
+  }
+
+  const addCustomTag = () => {
+    if (customTag.trim() && !selectedTags.includes(customTag.trim())) {
+      setSelectedTags((prev) => [...prev, customTag.trim()])
+      setCustomTag("")
+    }
+  }
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+    if (isRecording) {
+      interval = setInterval(() => {
+        setRecordingTime((prev) => prev + 1)
+      }, 1000)
+    }
+    return () => clearInterval(interval)
+  }, [isRecording])
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, "0")}`
+  }
+
+  if (mode === "settings") {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-2xl mx-auto">
+          <button
+            onClick={() => setMode(storyText ? "type" : "record")}
+            className="text-gray-600 hover:text-gray-800 flex items-center gap-2 mb-8"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back
+          </button>
+
+          <div className="bg-white rounded-2xl p-8 shadow-sm">
+            <div className="text-center mb-8">
+              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <img src="/memoryecho-logo.png" alt="MemoryEcho" className="w-6 h-6" />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">Story Settings</h1>
+              <p className="text-gray-600">Customize how your memory is shared</p>
+            </div>
+
+            <div className="space-y-8">
+              {/* Privacy Setting */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-gray-900">Privacy</h3>
+                  <p className="text-sm text-gray-600">
+                    {isPublic ? "Everyone can see this" : "Only you can see this"}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsPublic(!isPublic)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    isPublic ? "bg-green-500" : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      isPublic ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Collaborative Memory */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Users className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Collaborative Memory</h3>
+                    <p className="text-sm text-gray-600">Share with a group</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsCollaborative(!isCollaborative)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    isCollaborative ? "bg-blue-500" : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      isCollaborative ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Tags Section */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Tag className="w-5 h-5 text-gray-400" />
+                  <h3 className="font-semibold text-gray-900">Tags</h3>
+                </div>
+
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {predefinedTags.map((tag) => (
+                    <button
+                      key={tag}
+                      onClick={() => toggleTag(tag)}
+                      className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                        selectedTags.includes(tag)
+                          ? "bg-blue-100 text-blue-700 border border-blue-200"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={customTag}
+                    onChange={(e) => setCustomTag(e.target.value)}
+                    placeholder="Add custom tag"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    onKeyPress={(e) => e.key === "Enter" && addCustomTag()}
+                  />
+                  <button
+                    onClick={addCustomTag}
+                    className="px-4 py-2 text-blue-600 hover:text-blue-700 font-medium text-sm"
+                  >
+                    Add
+                  </button>
+                </div>
+
+                {selectedTags.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {selectedTags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium flex items-center gap-1"
+                      >
+                        {tag}
+                        <button onClick={() => toggleTag(tag)} className="text-blue-500 hover:text-blue-700">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Create Story Button and Profile */}
-            <div className="flex items-center gap-4">
+            <button
+              onClick={onBack}
+              className="w-full mt-8 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-semibold py-4 rounded-xl transition-all duration-200"
+            >
+              Continue to Verification
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (mode === "choose") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-orange-500 flex items-center justify-center p-6">
+        <div className="max-w-md w-full text-center">
+          <button
+            onClick={onBack}
+            className="absolute top-6 left-6 text-white/80 hover:text-white flex items-center gap-2"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back
+          </button>
+
+          <h1 className="text-4xl font-bold text-white mb-8">Create Your Story</h1>
+          <p className="text-white/90 text-lg mb-12">How would you like to share your memory?</p>
+
+          <div className="space-y-4">
+            <button
+              onClick={() => setMode("record")}
+              className="w-full bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-semibold py-6 px-8 rounded-2xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-3"
+            >
+              <Mic className="w-6 h-6" />
+              Record Your Story
+            </button>
+
+            <button
+              onClick={() => setMode("type")}
+              className="w-full bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-semibold py-6 px-8 rounded-2xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-3"
+            >
+              <MessageCircle className="w-6 h-6" />
+              Write Your Story
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (mode === "record") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-orange-500 flex flex-col items-center justify-center p-6">
+        <button
+          onClick={() => setMode("choose")}
+          className="absolute top-6 left-6 text-white/80 hover:text-white flex items-center gap-2"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back
+        </button>
+
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+            <h1 className="text-3xl font-bold text-white">I'm listening...</h1>
+          </div>
+        </div>
+
+        <div className="max-w-2xl mx-auto text-center mb-16">
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 mb-8">
+            <p className="text-white text-lg leading-relaxed">
+              Share a memory that means something special to you. It could be about family, a place you've been, or a
+              moment that changed your life.
+            </p>
+          </div>
+        </div>
+
+        {/* Recording Interface */}
+        <div className="flex flex-col items-center">
+          {isRecording && (
+            <div className="mb-8">
+              <div className="text-white text-2xl font-mono">{formatTime(recordingTime)}</div>
+              <div className="flex justify-center gap-1 mt-4">
+                {[...Array(5)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-2 bg-white rounded-full animate-pulse"
+                    style={{
+                      height: Math.random() * 40 + 20,
+                      animationDelay: `${i * 0.1}s`,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <button
+            onClick={() => {
+              setIsRecording(!isRecording)
+              if (!isRecording) setRecordingTime(0)
+            }}
+            className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-200 ${
+              isRecording ? "bg-red-500 hover:bg-red-600 animate-pulse" : "bg-white hover:bg-gray-100"
+            }`}
+          >
+            {isRecording ? <Square className="w-8 h-8 text-white" /> : <Mic className="w-8 h-8 text-gray-700" />}
+          </button>
+
+          <p className="text-white/80 mt-4 text-sm">
+            {isRecording ? "Tap to stop recording" : "Tap to start recording"}
+          </p>
+
+          {recordingTime > 0 && !isRecording && (
+            <button
+              onClick={() => setMode("settings")}
+              className="mt-8 bg-white hover:bg-gray-100 text-gray-900 px-8 py-3 rounded-xl font-semibold transition-colors"
+            >
+              Save Recording
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  if (mode === "type") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-orange-500 p-6">
+        <div className="max-w-4xl mx-auto">
+          <button
+            onClick={() => setMode("choose")}
+            className="text-white/80 hover:text-white flex items-center gap-2 mb-8"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back
+          </button>
+
+          <div className="bg-white rounded-2xl p-8 shadow-2xl">
+            <h1 className="text-3xl font-bold text-gray-900 mb-6">Write Your Story</h1>
+
+            <textarea
+              value={storyText}
+              onChange={(e) => setStoryText(e.target.value)}
+              placeholder="Share your memory here... What happened? How did it make you feel? What details make this story special to you?"
+              className="w-full h-96 p-6 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg leading-relaxed"
+            />
+
+            <div className="flex justify-between items-center mt-4">
+              <span className="text-gray-500 text-sm">{storyText.length} characters</span>
               <button
-                onClick={() => setCurrentScreen("create")}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-200 flex items-center gap-2 font-medium"
+                onClick={() => setMode("settings")}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-semibold transition-colors"
               >
-                <Plus className="w-5 h-5" />
-                Create Story
-              </button>
-              <button
-                onClick={() => handleNavigate("profile")}
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-              >
-                <User className="w-6 h-6 text-gray-600" />
+                Save Story
               </button>
             </div>
           </div>
         </div>
-      </header>
+      </div>
+    )
+  }
 
-      {currentScreen === "home" && <ExploreScreen onNavigate={handleNavigate} />}
-      {currentScreen === "mystories" && <MyStoriesScreen onNavigate={handleNavigate} />}
-      {currentScreen === "create" && <CreateStoryScreen onNavigate={handleNavigate} />}
-      {currentScreen === "activity" && <ActivityScreen onNavigate={handleNavigate} />}
-      {currentScreen === "profile" && <ProfileScreen onNavigate={handleNavigate} />}
-      {currentScreen === "verification" && <VerificationScreen onNavigate={handleNavigate} />}
+  return null
+}
+
+const StoryDetailModal = ({ story, onClose }: { story: any; onClose: () => void }) => {
+  const [scrollY, setScrollY] = useState(0)
+  const [isLiked, setIsLiked] = useState(false)
+  const [isSaved, setIsSaved] = useState(false)
+  const [newComment, setNewComment] = useState("")
+
+  useEffect(() => {
+    const handleScroll = (e: Event) => {
+      const target = e.target as HTMLElement
+      setScrollY(target.scrollTop)
+    }
+
+    const modalContent = document.getElementById("modal-content")
+    if (modalContent) {
+      modalContent.addEventListener("scroll", handleScroll)
+      return () => modalContent.removeEventListener("scroll", handleScroll)
+    }
+  }, [])
+
+  const imageHeight = Math.max(200, 400 - scrollY * 0.8)
+  const imageScale = Math.max(0.8, 1 - scrollY * 0.0005)
+  const isMinimized = scrollY > 100
+
+  const storyContent = {
+    "My Secret Garden":
+      "Behind our old house, there was a forgotten corner where wild roses climbed over a broken fence. I was seven when I first discovered it, pushing through the overgrown grass that tickled my bare legs. The air smelled of honeysuckle and earth after rain.\n\nI made it my secret place. Every afternoon, I would slip away with a book and a handful of crackers, settling into the soft moss beneath the apple tree. The garden seemed to breathe around me – butterflies dancing between the lavender, bees humming their ancient songs.\n\nYears later, when we moved away, I pressed a rose from that garden between the pages of my favorite book. Sometimes I still open it and remember the magic of having a place that was entirely mine.",
+
+    "The Letter I Never Sent":
+      "Dear Mom,\n\nIt's been three years since you left us, and I still find myself reaching for the phone to call you when something wonderful happens. Today I got the promotion you always said I deserved, and for a moment, I forgot you wouldn't be there to answer.\n\nI've written this letter a hundred times in my mind, walking through the forest path where we used to collect autumn leaves. The trees are bare now, just like that day when I realized I'd never hear your laugh again.\n\nI want you to know that I'm okay. Dad is learning to cook your recipes, though his attempts at your famous apple pie still make us smile through our tears. Sarah graduated with honors – you would have been so proud. And I finally learned to play that piano piece you loved.\n\nI carry your voice with me everywhere, Mom. In every decision I make, every kindness I show, every moment I choose love over fear. You're not gone – you're just written in a different language now, one that my heart is slowly learning to read.\n\nWith all my love,\nYour daughter",
+
+    "Family Reunion Memories":
+      "The kitchen was chaos in the most beautiful way. Aunties bustled around with steaming dishes, their voices rising and falling in Mandarin and English, sometimes both in the same sentence. The smell of dumplings and red-cooked pork filled every corner of Grandma's house.\n\nI was twelve, perched on a stool, watching my cousins fold wontons with the precision of tiny surgeons. Grandma's weathered hands guided mine, showing me how to crimp the edges just so. 'Like this, xiǎo bǎo,' she whispered, her voice warm as jasmine tea.\n\nUncle Chen told the same stories he told every year, his hands painting pictures in the air. The children rolled their eyes, but we all leaned in anyway, hungry for the familiar rhythm of family folklore. Outside, firecrackers popped like distant applause.\n\nThat night, as we sat around the table sharing oranges and laughter, I understood something profound about belonging. We were threads in a tapestry that stretched back generations, each of us carrying forward the colors and patterns of those who came before.",
+
+    "Walking to School in the Rain":
+      "The rain turned our neighborhood into a different world. Sarah and I splashed through puddles that reflected the gray sky like scattered mirrors, our yellow raincoats bright against the morning gloom.\n\nWe took the long way to school, as we always did when it rained. Past Mrs. Chen's garden where the roses hung heavy with water droplets, down the alley where cats sheltered under parked cars, their eyes glowing like amber lanterns.\n\nSarah collected things – smooth pebbles, interesting leaves, once a perfect snail shell. I collected moments. The way the rain drummed different songs on different surfaces. The smell of wet earth and blooming jasmine. The comfortable silence between best friends who didn't need words to communicate.\n\nWe were always late on rainy days, but our teacher, Mrs. Rodriguez, never scolded us. She understood that some lessons couldn't be learned from books – that sometimes the most important education happened in the spaces between destinations, in the willingness to get a little wet while discovering the world.",
+  }
+
+  const comments = [
+    {
+      id: 1,
+      author: "Emma Chen",
+      text: "This brought tears to my eyes. Thank you for sharing such a beautiful memory.",
+      time: "2 hours ago",
+    },
+    {
+      id: 2,
+      author: "David Kim",
+      text: "I had a secret place like this too when I was young. There's something magical about having your own little world.",
+      time: "5 hours ago",
+    },
+    {
+      id: 3,
+      author: "Maria Santos",
+      text: "Your writing is so vivid, I could almost smell the honeysuckle!",
+      time: "1 day ago",
+    },
+  ]
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+        {/* Header */}
+        <div
+          className={`sticky top-0 bg-white border-b border-gray-200 transition-all duration-300 ${
+            isMinimized ? "py-3" : "py-4"
+          }`}
+        >
+          <div className="flex items-center justify-between px-6">
+            <div className="flex items-center gap-4">
+              {isMinimized && (
+                <div className="w-12 h-12 rounded-lg overflow-hidden">
+                  <img
+                    src={story.image || "/placeholder.svg"}
+                    alt={story.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              <div>
+                {isMinimized && <h2 className="font-bold text-gray-900">{story.title}</h2>}
+                <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    <span>2024/1/12</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Tag className="w-4 h-4" />
+                    <span>Migration</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <User className="w-4 h-4" />
+                    <span>{story.author}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Scrollable Content */}
+        <div id="modal-content" className="overflow-y-auto max-h-[calc(90vh-80px)]">
+          {/* Story Image */}
+          <div className="relative overflow-hidden transition-all duration-300" style={{ height: `${imageHeight}px` }}>
+            <img
+              src={story.image || "/placeholder.svg"}
+              alt={story.title}
+              className="w-full h-full object-cover transition-transform duration-300"
+              style={{ transform: `scale(${imageScale})` }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+
+            {!isMinimized && (
+              <div className="absolute bottom-6 left-6 right-6">
+                <h1 className="text-white text-3xl font-bold mb-2">{story.title}</h1>
+                <div className="flex items-center gap-4 text-white/90">
+                  <span>{story.author}</span>
+                  <span className="bg-white/20 backdrop-blur-sm px-2 py-1 rounded-full text-sm">{story.tag}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Story Content */}
+          <div className="p-6">
+            <div className="prose prose-lg max-w-none mb-8">
+              {storyContent[story.title as keyof typeof storyContent]?.split("\n").map((paragraph, index) => (
+                <p key={index} className="mb-4 text-gray-700 leading-relaxed">
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+
+            {/* Engagement Buttons */}
+            <div className="flex items-center gap-6 py-4 border-y border-gray-200 mb-6">
+              <button
+                onClick={() => setIsLiked(!isLiked)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
+                  isLiked ? "bg-red-50 text-red-600" : "hover:bg-gray-100 text-gray-600"
+                }`}
+              >
+                <Heart className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
+                <span>{story.likes + (isLiked ? 1 : 0)}</span>
+              </button>
+
+              <button className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-gray-100 text-gray-600 transition-colors">
+                <MessageCircle className="w-5 h-5" />
+                <span>{comments.length}</span>
+              </button>
+
+              <button
+                onClick={() => setIsSaved(!isSaved)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
+                  isSaved ? "bg-blue-50 text-blue-600" : "hover:bg-gray-100 text-gray-600"
+                }`}
+              >
+                <Bookmark className={`w-5 h-5 ${isSaved ? "fill-current" : ""}`} />
+                <span>Save</span>
+              </button>
+
+              <button className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-gray-100 text-gray-600 transition-colors">
+                <Share2 className="w-5 h-5" />
+                <span>Share</span>
+              </button>
+            </div>
+
+            {/* Comments Section */}
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Comments</h3>
+
+              {/* Add Comment */}
+              <div className="mb-6">
+                <textarea
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Share your thoughts..."
+                  className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={3}
+                />
+                <div className="flex justify-end mt-2">
+                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                    Post Comment
+                  </button>
+                </div>
+              </div>
+
+              {/* Comments List */}
+              <div className="space-y-4">
+                {comments.map((comment) => (
+                  <div key={comment.id} className="flex gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                      <User className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <div className="font-medium text-gray-900 mb-1">{comment.author}</div>
+                        <p className="text-gray-700">{comment.text}</p>
+                      </div>
+                      <div className="text-sm text-gray-500 mt-1">{comment.time}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const CollectionsScreen = ({ onBack }: { onBack: () => void }) => {
+  return (
+    <div className="min-h-screen bg-white">
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
+          <div className="flex items-center gap-6">
+            <button
+              onClick={onBack}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="font-medium">Back to Profile</span>
+            </button>
+            <h1 className="text-3xl font-bold text-gray-900">Collections</h1>
+          </div>
+          <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+            <Plus className="w-4 h-4" />
+            <span>New Collection</span>
+          </button>
+        </div>
+
+        {/* Create New Collection Section */}
+        <div className="mb-8">
+          <button className="w-full max-w-md bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]">
+            <div className="flex items-center justify-center gap-3">
+              <Plus className="w-5 h-5" />
+              <span>Create New Collection</span>
+            </div>
+          </button>
+        </div>
+
+        {/* Collections Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Family Portraits Collection */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200 cursor-pointer group">
+            <div className="p-6">
+              <div className="w-full h-48 rounded-lg overflow-hidden bg-gray-100 mb-4">
+                <img
+                  src="/chinese-new-year-family.png"
+                  alt="Family Portraits"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                />
+              </div>
+              <h3 className="font-bold text-xl text-gray-900 mb-2">Family Portraits</h3>
+              <p className="text-gray-600 mb-4">Professional and candid family photos</p>
+              <div className="flex items-center gap-2 text-blue-600 font-medium">
+                <Camera className="w-4 h-4" />
+                <span>18 photos</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Travel Adventures Collection */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200 cursor-pointer group">
+            <div className="p-6">
+              <div className="w-full h-48 rounded-lg overflow-hidden bg-gray-100 mb-4">
+                <img
+                  src="/tropical-beach-palms.png"
+                  alt="Travel Adventures"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                />
+              </div>
+              <h3 className="font-bold text-xl text-gray-900 mb-2">Travel Adventures</h3>
+              <p className="text-gray-600 mb-4">Photos from our trips around the world</p>
+              <div className="flex items-center gap-2 text-blue-600 font-medium">
+                <Camera className="w-4 h-4" />
+                <span>42 photos</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Special Occasions Collection */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200 cursor-pointer group">
+            <div className="p-6">
+              <div className="w-full h-48 rounded-lg overflow-hidden bg-gray-100 mb-4">
+                <img
+                  src="/sunset-beach-generations.png"
+                  alt="Special Occasions"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                />
+              </div>
+              <h3 className="font-bold text-xl text-gray-900 mb-2">Special Occasions</h3>
+              <p className="text-gray-600 mb-4">Birthdays, holidays, and celebrations</p>
+              <div className="flex items-center gap-2 text-blue-600 font-medium">
+                <Camera className="w-4 h-4" />
+                <span>25 photos</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function App() {
+  const [currentScreen, setCurrentScreen] = useState("home")
+  const [activeTab, setActiveTab] = useState("home")
+  const [selectedStory, setSelectedStory] = useState<any>(null)
+  const [showStoryModal, setShowStoryModal] = useState(false)
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab)
+    if (tab === "home") {
+      setCurrentScreen("home")
+    } else if (tab === "mystories") {
+      setCurrentScreen("mystories")
+    }
+  }
+
+  const handleCreateStory = () => {
+    setCurrentScreen("create")
+  }
+
+  const handleProfileClick = () => {
+    setCurrentScreen("profile")
+  }
+
+  const handleCollectionsClick = () => {
+    setCurrentScreen("collections")
+  }
+
+  const handleActivityClick = () => {
+    setCurrentScreen("activity")
+  }
+
+  const handleSettingsClick = () => {
+    setCurrentScreen("settings")
+  }
+
+  const handleBackToProfile = () => {
+    setCurrentScreen("profile")
+  }
+
+  const openStoryModal = (story: any) => {
+    setSelectedStory(story)
+    setShowStoryModal(true)
+  }
+
+  const closeStoryModal = () => {
+    setShowStoryModal(false)
+    setSelectedStory(null)
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header
+        activeTab={activeTab}
+        setActiveTab={handleTabChange}
+        onCreateStory={handleCreateStory}
+        onProfileClick={handleProfileClick}
+      />
+
+      {currentScreen === "home" && <ExploreScreen onStoryClick={openStoryModal} />}
+
+      {currentScreen === "mystories" && <MyStoriesScreen onStoryClick={openStoryModal} />}
+
+      {currentScreen === "profile" && (
+        <ProfileScreen
+          onCollectionsClick={handleCollectionsClick}
+          onActivityClick={handleActivityClick}
+          onSettingsClick={handleSettingsClick}
+        />
+      )}
+
+      {currentScreen === "collections" && <CollectionsScreen onBack={handleBackToProfile} />}
+
+      {currentScreen === "activity" && <ActivityScreen onBack={handleBackToProfile} />}
+
+      {currentScreen === "settings" && <SettingsScreen onBack={handleBackToProfile} />}
+
+      {currentScreen === "create" && <StoryCreationScreen onBack={() => setCurrentScreen("home")} />}
+
+      {showStoryModal && selectedStory && <StoryDetailModal story={selectedStory} onClose={closeStoryModal} />}
     </div>
   )
 }
