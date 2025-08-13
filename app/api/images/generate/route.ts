@@ -2,9 +2,7 @@
 import { NextResponse } from "next/server";
 import { GoogleGenAI, Modality } from "@google/genai";
 
-
-
-export const runtime = "nodejs"; // 
+export const runtime = "nodejs"; // 本地/服务端跑图建议用 nodejs 运行时
 
 export async function POST(req: Request) {
   try {
@@ -19,52 +17,44 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "GOOGLE_API_KEY missing" }, { status: 500 });
     }
 
-    const ai = new GoogleGenAI({ apiKey });
+    const client = new GoogleGenAI({ apiKey });
 
-    // 按官方“Native image generation”调用
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash-preview-image-generation",
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: prompt.trim() }],
-        },
-      ],
-      // 关键：告诉模型我们要图像输出
+    // 说明：
+    // - "gemini-2.0-flash-preview-image-generation" 为官方图生图模型（有地区/配额限制）
+    // - 若你的账号该模型不可用，可换 "gemini-2.0-flash-exp"（通常返回文本，不一定返图）
+    const model = "gemini-2.0-flash-preview-image-generation";
+
+    const resp = await client.models.generateContent({
+      model,
+      contents: [{ role: "user", parts: [{ text: prompt.trim() }] }],
+      // 要求返回图像；部分地区可能忽略 width/height
       config: {
-        responseModalities: [Modality.TEXT, Modality.IMAGE],
-        // 宽高可选：有些配额/区域可能不支持，会忽略或报错；不需要可以删掉这段
-        // 新版 SDK 这里接受 imageGenerationConfig（有地区还在灰度中）
-        // @ts-ignore
-        imageGenerationConfig: {
-          numberOfImages: 1,
-          width,
-          height,
-        },
+        responseModalities: ["IMAGE", "TEXT"], // 让它尽量返图，文本用于报错提示
+        // @ts-ignore 新字段有时处于灰度；忽略 ts 报错即可
+        imageGenerationConfig: { numberOfImages: 1, width, height },
       },
     });
 
-    const cand = response.candidates?.[0];
-    const parts = cand?.content?.parts || [];
-
-    // 找到图片数据（inlineData.data 为 base64）
-    const imagePart: any = parts.find((p: any) => p.inlineData?.data);
-    const textPart: any = parts.find((p: any) => p.text);
+    // 解析返回的 base64 图像
+    const parts = resp?.candidates?.[0]?.content?.parts ?? [];
+    const imagePart: any = parts.find((p: any) => p?.inlineData?.data);
+    const textPart: any = parts.find((p: any) => typeof p?.text === "string");
 
     if (!imagePart?.inlineData?.data) {
-      const msg = textPart?.text || "No image returned";
+      // 模型没返图时，把文本返回出来方便你在前端 alert
+      const msg = textPart?.text || "No image returned by the model.";
       return NextResponse.json({ error: msg }, { status: 502 });
     }
 
-    const b64 = imagePart.inlineData.data;
-    const dataUrl = `data:image/png;base64,${b64}`;
+    const base64 = imagePart.inlineData.data as string;
+    const dataUrl = `data:image/png;base64,${base64}`;
 
-    return NextResponse.json({ image: dataUrl });
+    return NextResponse.json({ image: dataUrl, prompt: prompt.trim() });
   } catch (err: any) {
-    // 更友好的错误信息，便于你定位
-    return NextResponse.json(
-      { error: err?.message || "Image generation failed" },
-      { status: 500 }
-    );
+    // 返回更可读的错误
+    const message =
+      err?.message ||
+      (typeof err === "string" ? err : "Image generation failed");
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

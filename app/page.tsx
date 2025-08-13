@@ -28,6 +28,9 @@ import {
 } from "lucide-react"
 // Fixed import path for Header component
 import Header from "@/components/Header"
+import ChatWindow, { type Msg } from "@/components/Chatwindows"
+import { extractStoryText, storyToImagePrompt } from "@/lib/story";
+import { useRouter } from "next/navigation";
 
 
 type StepDef = {
@@ -38,6 +41,9 @@ type StepDef = {
 };
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
+
+
+//
 
 // Define all screen components inline instead of importing from separate files
 const ExploreScreen = ({ onStoryClick }: { onStoryClick: (story: any) => void }) => {
@@ -823,8 +829,11 @@ const ProfileScreen = ({
 }
 
 const StoryCreationScreen = ({ onBack }: { onBack: () => void }) => {
+  const router = useRouter();
+
   const [mode, setMode] = useState<"choose" | "record" | "type" | "settings">("choose");
 
+  // 原有状态
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [storyText, setStoryText] = useState("");
@@ -832,122 +841,79 @@ const StoryCreationScreen = ({ onBack }: { onBack: () => void }) => {
   const [isCollaborative, setIsCollaborative] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [customTag, setCustomTag] = useState("");
-    // === AI Story Chat (config-driven) ===
+
+  // ✅ Chat + steps
   const [steps, setSteps] = useState<StepDef[] | null>(null);
-  const [stepIdx, setStepIdx] = useState(0);
-  const [storyData, setStoryData] = useState<Record<string, string>>({});
-  const [chatMsgs, setChatMsgs] = useState<ChatMsg[]>([]);
-  const [chatInput, setChatInput] = useState("");
+  const [chatMessages, setChatMessages] = useState<Msg[]>([]);
+
+  // 结果
   const [busy, setBusy] = useState(false);
   const [finalStory, setFinalStory] = useState("");
   const [imagePrompt, setImagePrompt] = useState("");
+  const [imageDataUrl, setImageDataUrl] = useState("");
 
-  // Load steps from /public/story-steps.json when entering "type" mode
-// 原来：useEffect 里加载 steps 后会 fetch("/api/ask", { lastAnswer: "" }) —— 删除这一段
+  // 进入 type 时加载 steps
+  useEffect(() => {
+    if (mode !== "type") return;
+    (async () => {
+      try {
+        const res = await fetch("/story-steps.json", { cache: "no-store" });
+        const data: StepDef[] = await res.json();
+        setSteps(data);
+      } catch {
+        setSteps([]);
+      }
+    })();
+  }, [mode]);
 
-useEffect(() => {
-  if (mode !== "type") return;
-  (async () => {
-    try {
-      const res = await fetch("/story-steps.json", { cache: "no-store" });
-      const data: StepDef[] = await res.json();
-      setSteps(data);
-
-      const init: Record<string, string> = {};
-      data.forEach(s => (init[s.key] = ""));
-      setStoryData(init);
-      setFinalStory("");
-      setImagePrompt("");
-
-      // ✅ 只给欢迎语，不主动提问
-      setChatMsgs([
-        { role: "assistant", content: "Tell me your story details. I'll ask follow‑ups if something important is missing." }
-      ]);
-    } catch {
-      setChatMsgs([{ role: "assistant", content: "Failed to load steps configuration." }]);
-    }
-  })();
-}, [mode]);
-
-  const askNext = async (nextIdx: number) => {
+  // 生成故事（现在只在本页生成故事，出图交给新页面）
+  const handleGenerate = async () => {
     if (!steps) return;
-    const step = steps[nextIdx];
-    const r = await fetch("/api/ask", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        stepKey: step.key,
-        stepLabel: step.label,
-        required: !!step.required,
-        placeholder: step.placeholder || "",
-        collected: storyData
-      })
-    });
-    const data = await r.json();
-    setChatMsgs(m => [...m, { role:"assistant", content: data.question }]);
-  };
-
-  const sendChat = async () => {
-    if (mode !== "type" || !steps) return;
-    const val = chatInput.trim();
-    if (!val) return;
-  
-    // 显示用户消息
-    setChatMsgs(m => [...m, { role: "user", content: val }]);
-    setChatInput("");
     setBusy(true);
-  
+    setFinalStory("");
+    setImagePrompt("");
+    setImageDataUrl("");
+
     try {
-      const r = await fetch("/api/chat", {
+      // 1) 从聊天记录抽取字段
+      const r1 = await fetch("/api/collect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "extract",   // 这里标识是抽取+追问
-          steps,
-          collected: storyData,
-          lastAnswer: val
-        })
+        body: JSON.stringify({ steps, messages: chatMessages }),
       });
-  
-      const data = await r.json();
-      if (data.updatedCollected) setStoryData(data.updatedCollected);
-  
-      if (data.done) {
-        setChatMsgs(m => [...m, { role: "assistant", content: "All required info collected. You can generate the story now." }]);
+      const c = await r1.json();
+
+      if (!c.ok) {
+        const missingList = (c.missing || []).map((m: any) => m.label || m.key).join(", ");
+        alert(`We still need: ${missingList}. Could you provide these details?`);
         return;
       }
+
+      const storyData = c.storyData || {};
+
+      // 2) 生成故事
+      const r2 = await fetch("/api/story", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ storyData }),
+      });
+      const sdata = await r2.json();
+      setFinalStory(sdata.story || "");
+    } catch (error) {
+      console.error("Error generating story:", error);
+      alert("An error occurred while generating your story. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // ✅ 新增：跳到独立出图页
+  const openImagePage = () => {
   
-      if (data.question) {
-        setChatMsgs(m => [...m, { role: "assistant", content: data.question }]);
-      }
-    } finally {
-      setBusy(false);
-    }
+    router.push("/page2");
   };
 
-  const generateStoryAndImage = async () => {
-    if (!steps || busy) return;
-    setBusy(true);
-    try {
-      const sr = await fetch("/api/chat", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ mode: "story", storyData })
-      });
-      const sdata = await sr.json();
-      setFinalStory(sdata.story);
-
-      const ir = await fetch("/api/images/generate", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ storyData, story: sdata.story })
-      });
-      const idata = await ir.json();
-      setImagePrompt(idata.prompt || "");
-    } finally {
-      setBusy(false);
-    }
-  };
+  // =================== 渲染 ===================
   if (mode === "type") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-orange-500 p-6">
@@ -959,78 +925,65 @@ useEffect(() => {
             <ArrowLeft className="w-5 h-5" />
             Back
           </button>
-  
-          <div className="bg-white rounded-2xl p-8 shadow-2xl">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Write Your Story (Story Cards)
-            </h1>
-  
-            {/* Chat window */}
-            <div className="h-80 overflow-y-auto rounded border p-3 mb-3 bg-white">
-              {chatMsgs.map((m, i) => (
-                <div
-                  key={i}
-                  className={`mb-2 ${m.role === "assistant" ? "text-gray-900" : "text-blue-700"}`}
-                >
-                  <b>{m.role === "assistant" ? "AI" : "You"}:</b>{" "}
-                  <span className="whitespace-pre-wrap">{m.content}</span>
-                </div>
-              ))}
-            </div>
-  
-            {/* Input row */}
-            <div className="flex gap-2">
-              <input
-                className="flex-1 rounded border px-3 py-2"
-                placeholder={busy ? "Waiting for AI..." : "Write your story or answer AI questions"}
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendChat()}
-                disabled={busy}
-              />
-              <button
-                className="rounded bg-black px-4 py-2 text-white disabled:opacity-50"
-                onClick={sendChat}
-                disabled={busy}
-              >
-                Send
-              </button>
-              <button
-                className="rounded border px-4 py-2 disabled:opacity-50"
-                onClick={generateStoryAndImage}
-                disabled={
-                  busy ||
-                  !steps?.every((s) => !s.required || storyData[s.key]?.trim())
-                }
-                title="Generate Story & Image when all required info is filled"
-              >
-                Generate Story + Image
-              </button>
-            </div>
-  
-            {/* Results */}
-            {finalStory && (
-              <div className="mt-6">
-                <h2 className="text-xl font-semibold mb-2">Your Story</h2>
-                <div className="prose max-w-none whitespace-pre-wrap">
-                  {finalStory}
-                </div>
-              </div>
-            )}
-  
-            {imagePrompt && (
-              <div className="mt-4">
-                <h3 className="font-medium mb-1">Image Prompt (for image models)</h3>
-                <div className="rounded border p-3 text-sm text-gray-700 bg-gray-50">
-                  {imagePrompt}
-                </div>
-              </div>
-            )}
+
+          {/* 聊天 */}
+          <ChatWindow onMessagesChange={setChatMessages} />
+
+          {/* 生成故事按钮 */}
+          <div className="mt-4 flex gap-2">
+            <button
+              onClick={handleGenerate}
+              disabled={busy || !steps}
+              className="rounded border px-4 py-2 bg-white disabled:opacity-50"
+              title="Generate Story"
+            >
+              {busy ? "Generating..." : "Generate Story"}
+            </button>
+
+            {/* ✅ 新按钮：跳去新页面出图 */}
+            <button
+              onClick={openImagePage}
+              
+              className="rounded border px-4 py-2 bg-black text-white disabled:opacity-50"
+              title="Generate Image on a new page"
+            >
+              Go To Generate Image 
+            </button>
           </div>
+
+          {/* 故事结果 */}
+          {finalStory && (
+            <div className="mt-6 bg-white rounded-2xl p-6 shadow">
+              <h2 className="text-xl font-semibold mb-2">Your Story</h2>
+              <div className="prose max-w-none whitespace-pre-wrap">{finalStory}</div>
+              <p className="text-sm text-gray-500 mt-3">
+                Tip: Click “Generate Image on a new page” to create artwork from this story.
+              </p>
+            </div>
+          )}
+
+          {/* 旧的图片结果区块可保留/移除，这里先隐藏： */}
+          {false && (imageDataUrl || imagePrompt) && (
+            <div className="mt-4 bg-white rounded-2xl p-6 shadow">
+              {imageDataUrl && (
+                <>
+                  <h3 className="font-medium mb-2">Generated Image</h3>
+                  <img src={imageDataUrl} alt="Generated" className="rounded-lg border" />
+                </>
+              )}
+              {imagePrompt && (
+                <>
+                  <h3 className="font-medium mt-4 mb-1">Image Prompt</h3>
+                  <div className="rounded border p-3 text-sm text-gray-700 bg-gray-50">{imagePrompt}</div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
   }
+
   if (mode === "choose") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-orange-500 flex items-center justify-center p-6">
@@ -1042,10 +995,10 @@ useEffect(() => {
             <ArrowLeft className="w-5 h-5" />
             Back
           </button>
-  
+
           <h1 className="text-4xl font-bold text-white mb-8">Create Your Story</h1>
           <p className="text-white/90 text-lg mb-12">How would you like to share your memory?</p>
-  
+
           <div className="space-y-4">
             <button
               onClick={() => setMode("record")}
@@ -1054,7 +1007,7 @@ useEffect(() => {
               <Mic className="w-6 h-6" />
               Record Your Story
             </button>
-  
+
             <button
               onClick={() => setMode("type")}
               className="w-full bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-semibold py-6 px-8 rounded-2xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-3"
@@ -1069,7 +1022,7 @@ useEffect(() => {
   }
 
   return null;
-}
+};
 
 const StoryDetailModal = ({ story, onClose }: { story: any; onClose: () => void }) => {
   const [scrollY, setScrollY] = useState(0)
@@ -1079,8 +1032,10 @@ const StoryDetailModal = ({ story, onClose }: { story: any; onClose: () => void 
 
   useEffect(() => {
     const handleScroll = (e: Event) => {
-      const target = e.target as HTMLElement
-      setScrollY(target.scrollTop)
+      const el = e.currentTarget as HTMLElement;  
+      setScrollY(el?.scrollTop ?? 0);
+
+   
     }
 
     const modalContent = document.getElementById("modal-content")
