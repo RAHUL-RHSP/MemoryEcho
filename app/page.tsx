@@ -954,11 +954,20 @@ const StoryCreationScreen = ({
   onBack,
   onContinueToSettings,
 }: { onBack: () => void; onContinueToSettings: () => void }) => {
-  const [mode, setMode] = useState<"choose" | "write" | "record">("choose")
+  const [mode, setMode] = useState<"choose" | "write" | "record" | "enhance">("choose")
   const [storyText, setStoryText] = useState("")
   const [isRecording, setIsRecording] = useState(false)
   const [hasRecording, setHasRecording] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([])
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false)
+  const [enhancedStory, setEnhancedStory] = useState("")
+  const [aiChatMessages, setAiChatMessages] = useState<Array<{ role: "ai" | "user"; message: string }>>([])
+  const [userInput, setUserInput] = useState("")
+  const [isAiThinking, setIsAiThinking] = useState(false)
+  const [chatStarted, setChatStarted] = useState(false)
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false)
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null)
 
   const [currentQuestion, setCurrentQuestion] = useState(
     "Every memory has the power to inspire, connect, and heal. What story will you share today?",
@@ -994,6 +1003,94 @@ const StoryCreationScreen = ({
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
     return `${mins}:${secs.toString().padStart(2, "0")}`
+  }
+
+  const startAiGuidance = async () => {
+    setChatStarted(true)
+    setIsAiThinking(true)
+
+    // Simulate AI thinking
+    await new Promise((resolve) => setTimeout(resolve, 2000))
+
+    const initialMessage = `I've read your story and I think it has great potential! Let me help you make it even more engaging. 
+
+What specific moment in your story felt most important to you? I'd love to help you bring out more details about that part.`
+
+    setAiChatMessages([{ role: "ai", message: initialMessage }])
+    setIsAiThinking(false)
+  }
+
+  const sendMessageToAi = async () => {
+    if (!userInput.trim()) return
+
+    const newMessages = [...aiChatMessages, { role: "user" as const, message: userInput }]
+    setAiChatMessages(newMessages)
+    setUserInput("")
+    setIsAiThinking(true)
+
+    // Simulate AI response
+    await new Promise((resolve) => setTimeout(resolve, 2000))
+
+    const responses = [
+      "That's a beautiful detail! Can you tell me more about what you were feeling in that moment? Adding emotions helps readers connect with your story.",
+      "Interesting! What did you see, hear, or smell during that experience? Sensory details make stories come alive.",
+      "That sounds meaningful. Who else was there with you? How did they react or what did they say?",
+      "Great insight! What happened right before this moment? Sometimes the buildup makes the main event even more powerful.",
+      "I love that perspective! What would you tell someone else who went through something similar? That wisdom could be a beautiful ending.",
+    ]
+
+    const randomResponse = responses[Math.floor(Math.random() * responses.length)]
+
+    setAiChatMessages([...newMessages, { role: "ai", message: randomResponse }])
+    setIsAiThinking(false)
+  }
+
+  const generateStoryImage = async () => {
+    setIsGeneratingImage(true)
+
+    // Simulate image generation process
+    await new Promise((resolve) => setTimeout(resolve, 3000))
+
+    // Generate a placeholder image based on story content
+    const imagePrompt = storyText.slice(0, 100) + "..."
+    const generatedImageUrl = `/placeholder.svg?height=300&width=400&query=${encodeURIComponent(imagePrompt)}`
+
+    setGeneratedImage(generatedImageUrl)
+    setIsGeneratingImage(false)
+
+    // Add AI message about the generated image
+    const imageMessage =
+      "I've generated an image to complement your story! You can use this to enhance your storytelling or get inspiration for more visual details."
+    setAiChatMessages((prev) => [...prev, { role: "ai", message: imageMessage }])
+  }
+
+  const generateAISuggestions = async () => {
+    setIsGeneratingAI(true)
+    // Simulate AI processing
+    await new Promise((resolve) => setTimeout(resolve, 2000))
+
+    const suggestions = [
+      "Can you describe the setting in more detail? What did the place look, smell, or sound like?",
+      "What emotions were you feeling during this moment? How did your body react?",
+      "Who else was involved in this story? What were their reactions or expressions?",
+      "What specific details made this moment memorable? Any particular words, colors, or sounds?",
+      "How did this experience change you or influence your perspective?",
+      "What was happening in your life at the time that made this moment significant?",
+    ]
+
+    setAiSuggestions(suggestions.slice(0, 3))
+    setIsGeneratingAI(false)
+  }
+
+  const enhanceStoryWithAI = async () => {
+    setIsGeneratingAI(true)
+    // Simulate AI story enhancement
+    await new Promise((resolve) => setTimeout(resolve, 3000))
+
+    const enhanced = `${storyText}\n\n[AI Enhanced Version]\nYour story has been enriched with vivid details, emotional depth, and sensory descriptions that bring your memory to life. The enhanced version captures not just what happened, but how it felt, what you saw, heard, and experienced in that precious moment.`
+
+    setEnhancedStory(enhanced)
+    setIsGeneratingAI(false)
   }
 
   return (
@@ -1120,10 +1217,16 @@ const StoryCreationScreen = ({
                       Cancel
                     </button>
                     <button
-                      onClick={onContinueToSettings}
-                      className="px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white rounded-lg text-sm font-medium transition-all duration-300"
+                      onClick={() => {
+                        if (storyText.trim()) {
+                          setMode("enhance")
+                          generateAISuggestions()
+                        }
+                      }}
+                      disabled={!storyText.trim()}
+                      className="px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white rounded-lg text-sm font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Publish Story
+                      Enhance Story
                     </button>
                   </div>
                 </div>
@@ -1197,14 +1300,177 @@ const StoryCreationScreen = ({
                       Cancel
                     </button>
                     <button
-                      onClick={onContinueToSettings}
+                      onClick={() => {
+                        if (hasRecording) {
+                          setMode("enhance")
+                          generateAISuggestions()
+                        }
+                      }}
                       disabled={!hasRecording}
-                      className="px-6 py-3 bg-white hover:bg-white/90 text-orange-600 rounded-xl font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white rounded-xl font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Publish Story
+                      Enhance Story
                     </button>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {mode === "enhance" && (
+            <div className="max-w-4xl mx-auto space-y-6">
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-white mb-2">✨ Enhance Your Story</h2>
+                  <p className="text-white/80">Let AI help you add more depth and detail to your memory</p>
+                </div>
+
+                {isGeneratingAI ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin w-8 h-8 border-2 border-white/30 border-t-white rounded-full mx-auto mb-4"></div>
+                    <p className="text-white/80">AI is analyzing your story...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {aiSuggestions.length > 0 && (
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold text-white">💡 AI Suggestions to Enrich Your Story:</h3>
+                        {aiSuggestions.map((suggestion, index) => (
+                          <div key={index} className="bg-white/5 rounded-lg p-4 border border-white/10">
+                            <p className="text-white/90 text-sm">{suggestion}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {enhancedStory && (
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold text-white">✨ Enhanced Story Preview:</h3>
+                        <div className="bg-white/5 rounded-lg p-4 border border-white/10 max-h-40 overflow-y-auto">
+                          <p className="text-white/90 text-sm whitespace-pre-wrap">{enhancedStory}</p>
+                        </div>
+                        <button
+                          onClick={() => setStoryText(enhancedStory)}
+                          className="w-full py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-all duration-300"
+                        >
+                          Use Enhanced Version
+                        </button>
+                      </div>
+                    )}
+
+                    {!chatStarted ? (
+                      <div className="text-center space-y-4">
+                        <h3 className="text-lg font-semibold text-white">🤖 Get AI Writing Guidance</h3>
+                        <p className="text-white/80 text-sm">
+                          Let our AI guide you through improving your story with thoughtful questions and suggestions.
+                        </p>
+                        <button
+                          onClick={startAiGuidance}
+                          disabled={isAiThinking}
+                          className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium transition-all duration-300 disabled:opacity-50"
+                        >
+                          {isAiThinking ? "Starting..." : "Start AI Guidance"}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold text-white">💬 AI Writing Coach</h3>
+
+                        {/* Chat Messages */}
+                        <div className="bg-white/5 rounded-lg p-4 border border-white/10 max-h-60 overflow-y-auto space-y-3">
+                          {aiChatMessages.map((msg, index) => (
+                            <div
+                              key={index}
+                              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                            >
+                              <div
+                                className={`max-w-[80%] p-3 rounded-lg ${
+                                  msg.role === "user" ? "bg-orange-600 text-white" : "bg-white/10 text-white/90"
+                                }`}
+                              >
+                                <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                              </div>
+                            </div>
+                          ))}
+
+                          {isAiThinking && (
+                            <div className="flex justify-start">
+                              <div className="bg-white/10 text-white/90 p-3 rounded-lg">
+                                <p className="text-sm">AI is thinking...</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* User Input */}
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={userInput}
+                            onChange={(e) => setUserInput(e.target.value)}
+                            onKeyPress={(e) => e.key === "Enter" && sendMessageToAi()}
+                            placeholder="Share your thoughts or ask for guidance..."
+                            className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
+                          <button
+                            onClick={sendMessageToAi}
+                            disabled={isAiThinking || !userInput.trim()}
+                            className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-all duration-300 disabled:opacity-50"
+                          >
+                            Send
+                          </button>
+                        </div>
+
+                        <div className="border-t border-white/10 pt-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-medium text-white/90">Visual Enhancement</h4>
+                            <button
+                              onClick={generateStoryImage}
+                              disabled={isGeneratingImage}
+                              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-all duration-300 disabled:opacity-50 flex items-center gap-2"
+                            >
+                              {isGeneratingImage ? (
+                                <>
+                                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                  Generating...
+                                </>
+                              ) : (
+                                <>🎨 Generate Image</>
+                              )}
+                            </button>
+                          </div>
+
+                          {generatedImage && (
+                            <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                              <img
+                                src={generatedImage || "/placeholder.svg"}
+                                alt="Generated story illustration"
+                                className="w-full h-48 object-cover rounded-lg mb-2"
+                              />
+                              <p className="text-xs text-white/70">Generated image based on your story content</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-3 pt-4 border-t border-white/10">
+                      <button
+                        onClick={() => setMode(hasRecording ? "record" : "write")}
+                        className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transition-all duration-300"
+                      >
+                        ← Back to Edit
+                      </button>
+                      <button
+                        onClick={onContinueToSettings}
+                        className="flex-1 px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white rounded-lg font-medium transition-all duration-300"
+                      >
+                        Continue to Publish
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
