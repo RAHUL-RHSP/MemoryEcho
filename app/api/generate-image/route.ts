@@ -1,47 +1,109 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 
-export async function POST(request: NextRequest) {
+export const runtime = "nodejs"
+
+export async function POST(req: Request) {
   try {
-    const { prompt, storyContext } = await request.json()
+    const { prompt, storyContent } = await req.json()
 
-    if (!process.env.OPENAI_API_KEY) {
-      console.warn("OpenAI API key not found, using placeholder image")
-      const fallbackImageUrl = `/placeholder.svg?height=400&width=600&query=${encodeURIComponent(prompt)}`
-      return NextResponse.json({ imageUrl: fallbackImageUrl })
+    if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
+      return NextResponse.json({ error: "prompt is required" }, { status: 400 })
     }
 
-    // Using a placeholder image generation service
-    // Replace this with actual AI image generation service like OpenAI DALL-E, Midjourney, or Stable Diffusion
-    const response = await fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
+    const apiKey = process.env.GOOGLE_API_KEY
+    if (!apiKey) {
+      console.error("GOOGLE_API_KEY is missing from environment variables")
+      return NextResponse.json(
+        {
+          error: "API key not configured",
+          success: false,
+          isPlaceholder: true,
+          imageUrl: `/placeholder.svg?height=500&width=700&query=${encodeURIComponent("Story Memory Illustration")}`,
+        },
+        { status: 500 },
+      )
+    }
+
+    console.log("Starting Google AI image generation...")
+    console.log("Prompt:", prompt.substring(0, 100) + "...")
+
+    const enhancedPrompt = `Create a warm, nostalgic illustration of this memory: "${prompt}". 
+    ${storyContent ? `Story context: ${storyContent.substring(0, 300)}. ` : ""}
+    
+    Style: Soft, heartwarming, family-friendly illustration with warm lighting and emotional depth. 
+    Focus on capturing the essence and emotion of this personal memory.`
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: enhancedPrompt,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            responseModalities: ["TEXT", "IMAGE"],
+          },
+        }),
       },
-      body: JSON.stringify({
-        prompt: prompt,
-        n: 1,
-        size: "1024x1024",
-        quality: "standard",
-      }),
-    })
+    )
 
     if (!response.ok) {
-      // Fallback to placeholder if API fails
-      const fallbackImageUrl = `/placeholder.svg?height=400&width=600&query=${encodeURIComponent(prompt)}`
-      return NextResponse.json({ imageUrl: fallbackImageUrl })
+      throw new Error(`Google AI API error: ${response.status} ${response.statusText}`)
     }
 
     const data = await response.json()
-    const imageUrl = data.data[0].url
+    console.log("Google AI response received")
 
-    return NextResponse.json({ imageUrl })
-  } catch (error) {
-    console.error("Image generation error:", error)
+    if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+      for (const part of data.candidates[0].content.parts) {
+        if (part.inlineData && part.inlineData.data) {
+          // Convert base64 image data to data URL
+          const imageData = part.inlineData.data
+          const mimeType = part.inlineData.mimeType || "image/png"
+          const imageUrl = `data:${mimeType};base64,${imageData}`
 
-    // Return placeholder image as fallback
-    const { prompt } = await request.json()
-    const fallbackImageUrl = `/placeholder.svg?height=400&width=600&query=${encodeURIComponent(prompt)}`
-    return NextResponse.json({ imageUrl: fallbackImageUrl })
+          console.log("Real AI image generated successfully")
+
+          return NextResponse.json({
+            success: true,
+            imageUrl: imageUrl,
+            description: "AI-generated illustration of your memory story",
+            isPlaceholder: false,
+            message: "Real AI image generated using Google Gemini 2.0 Flash",
+          })
+        }
+
+        if (part.text) {
+          console.log("AI description:", part.text.substring(0, 100) + "...")
+        }
+      }
+    }
+
+    throw new Error("No image data found in Google AI response")
+  } catch (err: any) {
+    console.error("Google AI image generation error:", err)
+
+    // Create enhanced fallback placeholder
+    const fallbackDescription = `Memory illustration: ${prompt?.substring(0, 100) || "personal story"} - A warm, nostalgic scene capturing the essence of this meaningful memory`
+    const fallbackImageUrl = `/placeholder.svg?height=500&width=700&query=${encodeURIComponent(fallbackDescription)}`
+
+    return NextResponse.json({
+      success: false,
+      imageUrl: fallbackImageUrl,
+      description: fallbackDescription,
+      isPlaceholder: true,
+      error: err?.message || "Image generation failed",
+      message: "Using enhanced placeholder - Google AI image generation not available",
+    })
   }
 }

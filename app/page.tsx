@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import {
   ArrowLeft,
   Plus,
@@ -971,6 +971,12 @@ const StoryCreationScreen = ({
 
   const [showImageModal, setShowImageModal] = useState(false)
 
+  const [aiQuestions, setAiQuestions] = useState<string[]>([])
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [questionTransition, setQuestionTransition] = useState(false)
+  const [firstSentenceCompleted, setFirstSentenceCompleted] = useState(false)
+
   const [currentQuestion, setCurrentQuestion] = useState(
     "Every memory has the power to inspire, connect, and heal. What story will you share today?",
   )
@@ -1006,6 +1012,93 @@ const StoryCreationScreen = ({
     const secs = seconds % 60
     return `${mins}:${secs.toString().padStart(2, "0")}`
   }
+
+  const animateToNextQuestion = useCallback((newQuestion: string) => {
+    setQuestionTransition(true)
+    setTimeout(() => {
+      setCurrentQuestion(newQuestion)
+      setQuestionTransition(false)
+    }, 300)
+  }, [])
+
+  const analyzeStoryAndGenerateQuestions = useCallback(
+    async (text: string) => {
+      if (text.length < 50) return // Wait for meaningful content
+
+      setIsAnalyzing(true)
+
+      try {
+        const response = await fetch("/api/analyze-story", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ storyText: text }),
+        })
+
+        const data = await response.json()
+
+        if (data.success && data.questions.length > 0) {
+          setAiQuestions(data.questions)
+          if (firstSentenceCompleted) {
+            animateToNextQuestion(data.questions[0])
+          }
+        }
+      } catch (error) {
+        console.error("Story analysis error:", error)
+      } finally {
+        setIsAnalyzing(false)
+      }
+    },
+    [animateToNextQuestion, firstSentenceCompleted],
+  )
+
+  useEffect(() => {
+    if (mode === "write" && storyText.trim()) {
+      console.log("Story text changed:", storyText)
+      console.log("First sentence completed:", firstSentenceCompleted)
+
+      const hasFirstSentence = /[.!?]/.test(storyText)
+      console.log("Has first sentence:", hasFirstSentence)
+
+      if (hasFirstSentence && !firstSentenceCompleted) {
+        console.log("Triggering first sentence analysis")
+        setFirstSentenceCompleted(true)
+        // Trigger immediate analysis for first sentence
+        analyzeStoryAndGenerateQuestions(storyText)
+      } else if (firstSentenceCompleted) {
+        // Continue analyzing on every change after first sentence
+        analyzeStoryAndGenerateQuestions(storyText)
+      }
+    }
+  }, [storyText, mode, firstSentenceCompleted, analyzeStoryAndGenerateQuestions])
+
+  useEffect(() => {
+    console.log("AI Questions updated:", aiQuestions)
+    console.log("First sentence completed:", firstSentenceCompleted)
+
+    if (aiQuestions.length > 0 && firstSentenceCompleted) {
+      // Show first question immediately after first sentence
+      const initialTimeout = setTimeout(() => {
+        console.log("Showing first AI question")
+        animateToNextQuestion(aiQuestions[0])
+        setCurrentQuestionIndex(0)
+      }, 1000) // Small delay to ensure smooth transition
+
+      // Then rotate questions every 30 seconds
+      const interval = setInterval(() => {
+        setCurrentQuestionIndex((prev) => {
+          const nextIndex = (prev + 1) % aiQuestions.length
+          console.log("Rotating to question:", nextIndex)
+          animateToNextQuestion(aiQuestions[nextIndex])
+          return nextIndex
+        })
+      }, 30000)
+
+      return () => {
+        clearTimeout(initialTimeout)
+        clearInterval(interval)
+      }
+    }
+  }, [aiQuestions, firstSentenceCompleted, animateToNextQuestion])
 
   const startAiGuidance = async () => {
     setChatStarted(true)
@@ -1049,60 +1142,45 @@ What specific moment in your story felt most important to you? I'd love to help 
 
   const generateStoryImage = async () => {
     setIsGeneratingImage(true)
+    console.log("Starting image generation...")
 
     try {
-      // Create a detailed prompt based on the story and chat context
-      const storyContext = storyText.slice(0, 200)
-      const chatContext = aiChatMessages
-        .slice(-2)
-        .map((msg) => msg.message)
-        .join(" ")
-      const combinedPrompt = `${storyContext} ${chatContext}`.slice(0, 300)
+      const storyPrompt = storyText.slice(0, 300) || "A meaningful personal memory"
 
-      // Create image generation prompt
-      const imagePrompt = `Create a beautiful, artistic illustration that captures the essence of this story: ${combinedPrompt}. Style: warm, emotional, storytelling illustration`
-
-      // Call image generation API
       const response = await fetch("/api/generate-image", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: imagePrompt,
-          storyContext: storyContext,
+          prompt: `Illustrate this memory: ${storyPrompt}`,
+          storyContent: storyText,
         }),
       })
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
       const data = await response.json()
+      console.log("Image generation response:", data)
 
-      setGeneratedImage(data.imageUrl)
-      setShowImageModal(true)
+      if (data.success) {
+        setGeneratedImage(data.imageUrl)
+        setShowImageModal(true)
 
-      // Add AI message about the generated image
-      const imageMessage = `🎨 I've created a visual representation of your story! This image captures the essence of what we've been discussing. You can use this to:
-
-• Inspire additional details for your story
-• Share alongside your published story  
-• Help visualize the scene you're describing
-
-What do you think of this interpretation? Does it spark any new ideas for your story?`
-
-      setAiChatMessages((prev) => [...prev, { role: "ai", message: imageMessage }])
+        if (data.isPlaceholder) {
+          console.log("Using placeholder image:", data.message)
+        } else {
+          console.log("AI image generated successfully!")
+        }
+      } else {
+        throw new Error(data.error || "Image generation failed")
+      }
     } catch (error) {
-      console.error("Image generation failed:", error)
-      const fallbackPrompt = storyText.slice(0, 50) || "story illustration"
-      setGeneratedImage(`/placeholder.svg?height=400&width=600&query=${encodeURIComponent(fallbackPrompt)}`)
-      setShowImageModal(true)
+      console.error("Image generation error:", error)
 
-      setAiChatMessages((prev) => [
-        ...prev,
-        {
-          role: "ai",
-          message:
-            "I created a visual representation for your story! While I had some technical difficulties, I've generated an illustration that captures your story's theme.",
-        },
-      ])
+      const fallbackImage = `/placeholder.svg?height=400&width=600&query=${encodeURIComponent("Story Memory Illustration - " + (storyText.slice(0, 50) || "Personal Memory"))}`
+      setGeneratedImage(fallbackImage)
+      setShowImageModal(true)
     } finally {
       setIsGeneratingImage(false)
     }
@@ -1185,7 +1263,11 @@ What do you think of this interpretation? Does it spark any new ideas for your s
           </h1>
 
           <div className="mb-12">
-            <p className="text-white/80 text-xl md:text-2xl leading-relaxed">{currentQuestion}</p>
+            <p
+              className={`text-white/80 text-xl md:text-2xl leading-relaxed transition-all duration-300 ${questionTransition ? "opacity-0 transform scale-95" : "opacity-100 transform scale-100"}`}
+            >
+              {currentQuestion}
+            </p>
           </div>
 
           {mode === "choose" && (
@@ -1219,6 +1301,14 @@ What do you think of this interpretation? Does it spark any new ideas for your s
                   placeholder="Share your story here..."
                   className="w-full h-32 bg-white/5 border border-white/20 rounded-xl p-4 text-white placeholder-white/60 resize-none focus:outline-none focus:ring-2 focus:ring-orange-400/50 focus:border-transparent text-sm"
                 />
+
+                {isAnalyzing && (
+                  <div className="flex items-center gap-2 mt-2 text-white/60 text-xs">
+                    <div className="w-3 h-3 border border-white/40 border-t-white rounded-full animate-spin"></div>
+                    AI is reading your story...
+                  </div>
+                )}
+
                 <div className="flex justify-between items-center mt-3">
                   <div className="text-white/60 text-xs">{storyText.length} characters</div>
                   <div className="flex gap-3">
@@ -1226,6 +1316,10 @@ What do you think of this interpretation? Does it spark any new ideas for your s
                       onClick={() => {
                         setMode("choose")
                         setStoryText("")
+                        setAiQuestions([])
+                        setCurrentQuestion(
+                          "Every memory has the power to inspire, connect, and heal. What story will you share today?",
+                        )
                       }}
                       className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-medium transition-all duration-300"
                     >
@@ -1243,24 +1337,13 @@ What do you think of this interpretation? Does it spark any new ideas for your s
                       {isGeneratingImage ? (
                         <>
                           <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                          Generating...
+                          Generating Image...
                         </>
                       ) : (
-                        <>🎨 Generate Picture</>
+                        <>🎨 Generate Image</>
                       )}
                     </button>
                   </div>
-
-                  {generatedImage && (
-                    <div className="mt-4 bg-white/5 rounded-lg p-4 border border-white/10">
-                      <img
-                        src={generatedImage || "/placeholder.svg"}
-                        alt="AI-generated story illustration"
-                        className="w-full h-64 object-cover rounded-lg"
-                      />
-                      <p className="text-xs text-white/70 mt-2 text-center">Generated image based on your story</p>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -1343,10 +1426,10 @@ What do you think of this interpretation? Does it spark any new ideas for your s
                       {isGeneratingImage ? (
                         <>
                           <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                          Generating...
+                          Generating Image...
                         </>
                       ) : (
-                        <>🎨 Generate Picture</>
+                        <>🖼️ Generate Image</>
                       )}
                     </button>
                   </div>
@@ -1459,7 +1542,8 @@ What do you think of this interpretation? Does it spark any new ideas for your s
                             onChange={(e) => setUserInput(e.target.value)}
                             onKeyPress={(e) => e.key === "Enter" && sendMessageToAi()}
                             placeholder="Share your thoughts or ask for guidance..."
-                            className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2
+ focus:ring-orange-500"
                           />
                           <button
                             onClick={sendMessageToAi}
@@ -1473,6 +1557,7 @@ What do you think of this interpretation? Does it spark any new ideas for your s
                         <div className="border-t border-white/10 pt-4 space-y-3">
                           <div className="flex items-center justify-between">
                             <h4 className="text-sm font-medium text-white/90">Visual Enhancement</h4>
+                            {/* Updated AI chat visual button */}
                             <button
                               onClick={generateStoryImage}
                               disabled={isGeneratingImage || !storyText.trim()}
@@ -1481,10 +1566,10 @@ What do you think of this interpretation? Does it spark any new ideas for your s
                               {isGeneratingImage ? (
                                 <>
                                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                  Creating Art...
+                                  Generating...
                                 </>
                               ) : (
-                                <>🎨 Generate Story Image</>
+                                <>🖼️ Generate Image</>
                               )}
                             </button>
                           </div>
