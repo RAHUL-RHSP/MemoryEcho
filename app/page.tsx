@@ -25,6 +25,8 @@ import {
   Settings,
   Trash2,
   Eye,
+  BookOpen,
+  Printer,
 } from "lucide-react"
 // Fixed import path for Header component
 import Header from "@/components/Header"
@@ -151,6 +153,10 @@ const MyStoriesScreen = ({ onStoryClick }: { onStoryClick: (story: any) => void 
   const [privacyFilter, setPrivacyFilter] = useState("All")
   const [categoryFilter, setCategoryFilter] = useState("All Categories")
   const [sortBy, setSortBy] = useState("Most Recent")
+  const [showBookletModal, setShowBookletModal] = useState(false)
+  const [selectedStory, setSelectedStory] = useState<any>(null)
+  const [bookletFormat, setBookletFormat] = useState("Standard")
+  const [bookletSize, setBookletSize] = useState("A4")
 
   const myStories = [
     {
@@ -226,6 +232,17 @@ const MyStoriesScreen = ({ onStoryClick }: { onStoryClick: (story: any) => void 
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">My Stories</h1>
+        <button
+          onClick={() => setShowBookletModal(true)}
+          className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+        >
+          <BookOpen className="w-5 h-5" />
+          Create Booklet
+        </button>
+      </div>
+
       {/* Privacy Filter Tabs */}
       <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
         {privacyOptions.map((option) => (
@@ -342,6 +359,128 @@ const MyStoriesScreen = ({ onStoryClick }: { onStoryClick: (story: any) => void 
       {filteredStories.length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-500 text-lg">No stories found matching your filters.</p>
+        </div>
+      )}
+
+      {showBookletModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Create Story Booklet</h2>
+                <button onClick={() => setShowBookletModal(false)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Story Selection */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3">Select Story</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {myStories.map((story) => (
+                    <div
+                      key={story.id}
+                      onClick={() => setSelectedStory(story)}
+                      className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        selectedStory?.id === story.id
+                          ? "border-orange-500 bg-orange-50"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={story.image || "/placeholder.svg"}
+                          alt={story.title}
+                          className="w-12 h-12 object-cover rounded"
+                        />
+                        <div>
+                          <h4 className="font-medium">{story.title}</h4>
+                          <p className="text-sm text-gray-500">{story.date}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Booklet Format Options */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3">Booklet Format</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {["Standard", "Premium", "Photo Book", "Minimalist"].map((format) => (
+                    <button
+                      key={format}
+                      onClick={() => setBookletFormat(format)}
+                      className={`p-4 border-2 rounded-lg text-left transition-all ${
+                        bookletFormat === format
+                          ? "border-orange-500 bg-orange-50"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <div className="font-medium">{format}</div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        {format === "Standard" && "Classic layout with text and images"}
+                        {format === "Premium" && "Enhanced design with decorative elements"}
+                        {format === "Photo Book" && "Image-focused with minimal text"}
+                        {format === "Minimalist" && "Clean, simple typography"}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Size Options */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3">Size & Format</h3>
+                <div className="flex gap-3">
+                  {["A4", "A5", "Letter", "Square"].map((size) => (
+                    <button
+                      key={size}
+                      onClick={() => setBookletSize(size)}
+                      className={`px-4 py-2 border-2 rounded-lg transition-all ${
+                        bookletSize === size
+                          ? "border-orange-500 bg-orange-50 text-orange-700"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4 border-t">
+                <button
+                  onClick={() => {
+                    if (selectedStory) {
+                      alert(
+                        `Creating ${bookletFormat} booklet for "${selectedStory.title}" in ${bookletSize} format...`,
+                      )
+                      setShowBookletModal(false)
+                    }
+                  }}
+                  disabled={!selectedStory}
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <Printer className="w-5 h-5" />
+                  Create & Print Booklet
+                </button>
+                <button
+                  onClick={() => {
+                    if (selectedStory) {
+                      alert(`Previewing ${bookletFormat} booklet for "${selectedStory.title}"...`)
+                    }
+                  }}
+                  disabled={!selectedStory}
+                  className="px-6 py-3 border border-gray-300 hover:bg-gray-50 disabled:bg-gray-100 text-gray-700 rounded-lg font-medium transition-colors flex items-center gap-2"
+                >
+                  <Eye className="w-5 h-5" />
+                  Preview
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -811,41 +950,34 @@ const ProfileScreen = ({
   )
 }
 
-const StoryCreationScreen = ({ onBack }: { onBack: () => void }) => {
-  const [mode, setMode] = useState<"choose" | "record" | "type" | "settings">("choose")
-  const [isRecording, setIsRecording] = useState(false)
-  const [recordingTime, setRecordingTime] = useState(0)
-  const [showWriteBox, setShowWriteBox] = useState(false)
+const StoryCreationScreen = ({
+  onBack,
+  onContinueToSettings,
+}: { onBack: () => void; onContinueToSettings: () => void }) => {
+  const [mode, setMode] = useState<"choose" | "write" | "record">("choose")
   const [storyText, setStoryText] = useState("")
-  const [isPublic, setIsPublic] = useState(true)
-  const [isCollaborative, setIsCollaborative] = useState(false)
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [customTag, setCustomTag] = useState("")
+  const [isRecording, setIsRecording] = useState(false)
+  const [hasRecording, setHasRecording] = useState(false)
+  const [recordingTime, setRecordingTime] = useState(0)
 
-  const floatingPrompts = [
-    "What made you smile today?",
-    "Who changed your life?",
-    "What's your favorite memory?",
-    "Where do you feel most at home?",
-    "What lesson did you learn?",
-    "What moment took your breath away?",
-    "Who do you miss the most?",
-    "What tradition means everything to you?",
-    "What adventure changed you?",
-    "What small moment was actually huge?",
-  ]
+  const [currentQuestion, setCurrentQuestion] = useState(
+    "Every memory has the power to inspire, connect, and heal. What story will you share today?",
+  )
 
-  const predefinedTags = ["nostalgia", "family", "childhood", "love", "tradition", "wisdom", "art", "memories"]
-
-  const toggleTag = (tag: string) => {
-    setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
+  const categoryPrompts = {
+    Family: "Share a cherished family memory that brings you joy",
+    Adventure: "Tell us about an adventure that changed your perspective",
+    Food: "Describe a meal or recipe that holds special meaning",
+    Romance: "Share a moment of love that touched your heart",
+    Tradition: "Tell us about a tradition that connects you to your roots",
+    Mystery: "Recall an unexplained moment that still intrigues you",
+    Wisdom: "Share a lesson learned that shaped who you are today",
+    Memories: "What memory do you find yourself returning to again and again?",
   }
 
-  const addCustomTag = () => {
-    if (customTag.trim() && !selectedTags.includes(customTag.trim())) {
-      setSelectedTags((prev) => [...prev, customTag.trim()])
-      setCustomTag("")
-    }
+  const handleCategoryClick = (category: string) => {
+    console.log("Button clicked:", category)
+    setCurrentQuestion(categoryPrompts[category as keyof typeof categoryPrompts] || currentQuestion)
   }
 
   useEffect(() => {
@@ -864,366 +996,362 @@ const StoryCreationScreen = ({ onBack }: { onBack: () => void }) => {
     return `${mins}:${secs.toString().padStart(2, "0")}`
   }
 
-  if (mode === "settings") {
-    return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-2xl mx-auto">
-          <button
-            onClick={() => setMode(storyText ? "type" : "record")}
-            className="text-gray-600 hover:text-gray-800 flex items-center gap-2 mb-8"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            Back
-          </button>
-
-          <div className="bg-white rounded-2xl p-8 shadow-sm">
-            <div className="text-center mb-8">
-              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <img src="/memoryecho-logo.png" alt="MemoryEcho" className="w-6 h-6" />
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Story Settings</h1>
-              <p className="text-gray-600">Customize how your memory is shared</p>
-            </div>
-
-            <div className="space-y-8">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Eye className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <h3 className="font-semibold text-gray-900">Privacy</h3>
-                    <p className="text-sm text-gray-600">
-                      {isPublic ? "Everyone can see this" : "Only you can see this"}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsPublic(!isPublic)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    isPublic ? "bg-orange-500" : "bg-gray-300"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      isPublic ? "translate-x-6" : "translate-x-1"
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* Collaborative Memory */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Users className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <h3 className="font-semibold text-gray-900">Collaborative Memory</h3>
-                    <p className="text-sm text-gray-600">Share with a group</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsCollaborative(!isCollaborative)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    isCollaborative ? "bg-purple-500" : "bg-gray-300"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      isCollaborative ? "translate-x-6" : "translate-x-1"
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* Tags Section */}
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <Tag className="w-5 h-5 text-gray-400" />
-                  <h3 className="font-semibold text-gray-900">Tags</h3>
-                </div>
-
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {predefinedTags.map((tag) => (
-                    <button
-                      key={tag}
-                      onClick={() => toggleTag(tag)}
-                      className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                        selectedTags.includes(tag)
-                          ? "bg-orange-100 text-orange-700 border border-orange-200"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={customTag}
-                    onChange={(e) => setCustomTag(e.target.value)}
-                    placeholder="Add custom tag"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
-                    onKeyPress={(e) => e.key === "Enter" && addCustomTag()}
-                  />
-                  <button
-                    onClick={addCustomTag}
-                    className="px-4 py-2 text-orange-600 hover:text-orange-700 font-medium text-sm"
-                  >
-                    Add
-                  </button>
-                </div>
-
-                {selectedTags.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {selectedTags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium flex items-center gap-1"
-                      >
-                        {tag}
-                        <button onClick={() => toggleTag(tag)} className="text-orange-500 hover:text-orange-700">
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <button
-              onClick={onBack}
-              className="w-full mt-8 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-semibold py-4 rounded-xl transition-all duration-200"
-            >
-              Continue to Verification
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (mode === "choose") {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-orange-600 to-pink-500 flex items-center justify-center p-6 relative overflow-hidden">
-        {floatingPrompts.map((prompt, index) => (
-          <div
-            key={index}
-            className="absolute text-white/40 text-sm font-medium pointer-events-none animate-pulse"
-            style={{
-              top: `${20 + ((index * 12) % 60)}%`,
-              left: index % 2 === 0 ? `${5 + ((index * 7) % 15)}%` : `${75 + ((index * 7) % 20)}%`,
-              animationDelay: `${index * 0.5}s`,
-              animationDuration: `${3 + (index % 3)}s`,
-            }}
-          >
-            <div className="animate-bounce" style={{ animationDelay: `${index * 0.3}s` }}>
-              {prompt}
-            </div>
-          </div>
-        ))}
-
-        <div className="max-w-md w-full text-center relative z-10">
-          <button
-            onClick={onBack}
-            className="absolute top-6 left-6 text-white/80 hover:text-white flex items-center gap-2"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            Back
-          </button>
-
-          <h1 className="text-4xl font-bold text-white mb-8">Tell Your Story</h1>
-          <p className="text-white/80 text-2xl leading-relaxed mb-12">
-            Share a memory that means something special to you. It could be about family, a place you've been, or a
-            moment that changed your life.
-          </p>
-
-          <div className="space-y-4">
-            <button
-              onClick={() => setMode("record")}
-              className="w-full bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-semibold py-6 px-8 rounded-2xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-3"
-            >
-              <Mic className="w-6 h-6" />
-              Record Your Story
-            </button>
-
-            {mode === "choose" && (
-              <>
-                {!showWriteBox ? (
-                  <button
-                    onClick={() => setShowWriteBox(true)}
-                    className="w-1/2 mx-auto bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-semibold py-4 px-8 rounded-2xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-3"
-                  >
-                    <MessageCircle className="w-6 h-6" />
-                    Write Your Story
-                  </button>
-                ) : (
-                  <div className="w-full max-w-2xl mx-auto bg-white/20 backdrop-blur-sm rounded-2xl p-6">
-                    <textarea
-                      value={storyText}
-                      onChange={(e) => setStoryText(e.target.value)}
-                      placeholder="Share your memory here..."
-                      className="w-full h-40 bg-transparent text-white placeholder-white/70 border-none outline-none resize-none text-lg"
-                      autoFocus
-                    />
-                    <div className="flex gap-3 mt-4">
-                      <button
-                        onClick={() => setShowWriteBox(false)}
-                        className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => setMode("settings")}
-                        className="px-6 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors"
-                      >
-                        Continue
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-
-          {mode === "type" && (
-            <div className="mt-8 bg-white/10 backdrop-blur-sm rounded-2xl p-6">
-              <textarea
-                value={storyText}
-                onChange={(e) => setStoryText(e.target.value)}
-                placeholder="Share your memory here... What happened? How did it make you feel?"
-                className="w-full h-48 p-4 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-white/50 text-white placeholder-white/70 text-lg"
-              />
-              <div className="flex justify-between items-center mt-4">
-                <button onClick={() => setMode("choose")} className="text-white/80 hover:text-white text-sm">
-                  Cancel
-                </button>
-                <button
-                  onClick={() => setMode("settings")}
-                  className="bg-white/20 hover:bg-white/30 text-white px-6 py-2 rounded-xl font-semibold transition-colors"
-                >
-                  Save Story
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  if (mode === "record") {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-orange-600 to-pink-500 flex flex-col items-center justify-center p-6">
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-orange-400 via-orange-500 to-pink-500 relative overflow-hidden">
+      <div className="absolute inset-0">
         <button
-          onClick={() => setMode("choose")}
-          className="absolute top-6 left-6 text-white/80 hover:text-white flex items-center gap-2"
+          onClick={() => handleCategoryClick("Family")}
+          className="absolute top-16 left-8 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-white/30 transition-all duration-300 cursor-pointer z-10 shadow-lg"
         >
-          <ArrowLeft className="w-5 h-5" />
-          Back
+          Family
         </button>
 
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-            <h1 className="text-2xl font-bold text-white">I'm listening...</h1>
+        <button
+          onClick={() => handleCategoryClick("Adventure")}
+          className="absolute top-32 left-16 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-white/30 transition-all duration-300 cursor-pointer z-10 shadow-lg"
+        >
+          Adventure
+        </button>
+
+        <button
+          onClick={() => handleCategoryClick("Food")}
+          className="absolute bottom-32 left-8 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-white/30 transition-all duration-300 cursor-pointer z-10 shadow-lg"
+        >
+          Food
+        </button>
+
+        <button
+          onClick={() => handleCategoryClick("Romance")}
+          className="absolute top-24 right-8 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-white/30 transition-all duration-300 cursor-pointer z-10 shadow-lg"
+        >
+          Romance
+        </button>
+
+        <button
+          onClick={() => handleCategoryClick("Tradition")}
+          className="absolute top-40 right-16 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-white/30 transition-all duration-300 cursor-pointer z-10 shadow-lg"
+        >
+          Tradition
+        </button>
+
+        <button
+          onClick={() => handleCategoryClick("Wisdom")}
+          className="absolute bottom-24 right-8 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-white/30 transition-all duration-300 cursor-pointer z-10 shadow-lg"
+        >
+          Wisdom
+        </button>
+
+        <button
+          onClick={() => handleCategoryClick("Memories")}
+          className="absolute bottom-16 left-24 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-white/30 transition-all duration-300 cursor-pointer z-10 shadow-lg"
+        >
+          Memories
+        </button>
+
+        <button
+          onClick={() => handleCategoryClick("Mystery")}
+          className="absolute bottom-40 right-24 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-white/30 transition-all duration-300 cursor-pointer z-10 shadow-lg"
+        >
+          Mystery
+        </button>
+      </div>
+
+      <div className="relative z-20 flex flex-col items-center justify-center min-h-screen px-16 py-8">
+        <div className="text-center max-w-3xl mx-auto">
+          <h1
+            className="text-5xl md:text-6xl font-bold text-white mb-8 tracking-tight cursor-pointer hover:text-white/90 transition-colors"
+            onClick={() =>
+              setCurrentQuestion(
+                "Every memory has the power to inspire, connect, and heal. What story will you share today?",
+              )
+            }
+          >
+            {currentQuestion ===
+            "Every memory has the power to inspire, connect, and heal. What story will you share today?"
+              ? "Tell Your Story"
+              : "Your Story Prompt"}
+          </h1>
+
+          <div className="mb-12">
+            <p className="text-white/80 text-xl md:text-2xl leading-relaxed">{currentQuestion}</p>
           </div>
-        </div>
 
-        <div className="max-w-2xl mx-auto text-center mb-16">
-          <p className="text-white/80 text-2xl leading-relaxed">
-            Share a memory that means something special to you. It could be about family, a place you've been, or a
-            moment that changed your life.
-          </p>
-        </div>
+          {mode === "choose" && (
+            <div className="flex items-center gap-6 justify-center">
+              <button
+                onClick={() => setMode("write")}
+                className="bg-white text-orange-600 px-8 py-4 rounded-2xl text-lg font-semibold hover:bg-orange-50 transition-all duration-200 hover:scale-105 shadow-lg flex items-center gap-3"
+              >
+                <span>✏️</span>
+                Write Your Story
+              </button>
 
-        {/* Recording Interface */}
-        <div className="flex flex-col items-center">
-          {isRecording && (
-            <div className="mb-8">
-              <div className="text-white text-2xl font-mono">{formatTime(recordingTime)}</div>
-              <div className="flex justify-center gap-1 mt-4">
-                {[...Array(5)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="w-2 bg-white rounded-full animate-pulse"
-                    style={{
-                      height: Math.random() * 40 + 20,
-                      animationDelay: `${i * 0.1}s`,
-                    }}
-                  />
-                ))}
+              <span className="text-white/60 text-lg font-medium">or</span>
+
+              <button
+                onClick={() => setMode("record")}
+                className="bg-orange-600/80 backdrop-blur-sm text-white px-8 py-4 rounded-2xl text-lg font-semibold hover:bg-orange-600 transition-all duration-200 hover:scale-105 shadow-lg flex items-center gap-3"
+              >
+                <span>🎤</span>
+                Record Your Story
+              </button>
+            </div>
+          )}
+
+          {mode === "write" && (
+            <div className="flex items-center gap-4 bg-white/10 backdrop-blur-sm rounded-2xl p-6 border-2 border-red-400/50 max-w-4xl mx-auto">
+              <div className="flex-1">
+                <textarea
+                  value={storyText}
+                  onChange={(e) => setStoryText(e.target.value)}
+                  placeholder="Share your story here..."
+                  className="w-full h-32 bg-white/5 border border-white/20 rounded-xl p-4 text-white placeholder-white/60 resize-none focus:outline-none focus:ring-2 focus:ring-orange-400/50 focus:border-transparent text-sm"
+                />
+                <div className="flex justify-between items-center mt-3">
+                  <div className="text-white/60 text-xs">{storyText.length} characters</div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        setMode("choose")
+                        setStoryText("")
+                      }}
+                      className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-medium transition-all duration-300"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={onContinueToSettings}
+                      className="px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white rounded-lg text-sm font-medium transition-all duration-300"
+                    >
+                      Publish Story
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
-          <button
-            onClick={() => {
-              setIsRecording(!isRecording)
-              if (!isRecording) setRecordingTime(0)
-            }}
-            className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-200 ${
-              isRecording ? "bg-red-500 hover:bg-red-600 animate-pulse" : "bg-white hover:bg-gray-100"
-            }`}
-          >
-            {isRecording ? <Square className="w-8 h-8 text-white" /> : <Mic className="w-8 h-8 text-gray-700" />}
-          </button>
+          {mode === "record" && (
+            <div className="max-w-2xl mx-auto space-y-6">
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 text-center">
+                <div className="space-y-6">
+                  <div className="text-white/80 text-lg">
+                    {isRecording ? "Recording..." : hasRecording ? "Recording Complete" : "Ready to Record"}
+                  </div>
 
-          <p className="text-white/80 mt-4 text-sm">
-            {isRecording ? "Tap to stop recording" : "Tap to start recording"}
-          </p>
+                  {isRecording && (
+                    <div className="text-3xl font-mono text-white">
+                      {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, "0")}
+                    </div>
+                  )}
 
-          {recordingTime > 0 && !isRecording && (
-            <button
-              onClick={() => setMode("settings")}
-              className="mt-8 bg-white hover:bg-gray-100 text-gray-900 px-8 py-3 rounded-xl font-semibold transition-colors"
-            >
-              Save Recording
-            </button>
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => {
+                        if (isRecording) {
+                          setIsRecording(false)
+                          setHasRecording(true)
+                        } else {
+                          setIsRecording(true)
+                          setRecordingTime(0)
+                        }
+                      }}
+                      className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 ${
+                        isRecording ? "bg-red-500 hover:bg-red-600 animate-pulse" : "bg-white hover:bg-gray-100"
+                      }`}
+                    >
+                      {isRecording ? (
+                        <Square className="w-8 h-8 text-white" />
+                      ) : (
+                        <Mic className="w-8 h-8 text-red-500" />
+                      )}
+                    </button>
+                  </div>
+
+                  {hasRecording && (
+                    <div className="space-y-4">
+                      <div className="flex justify-center gap-4">
+                        <button
+                          onClick={() => {
+                            setHasRecording(false)
+                            setRecordingTime(0)
+                          }}
+                          className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transition-all duration-300"
+                        >
+                          Re-record
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-center gap-4 pt-4">
+                    <button
+                      onClick={() => {
+                        setMode("choose")
+                        setHasRecording(false)
+                        setIsRecording(false)
+                        setRecordingTime(0)
+                      }}
+                      className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-medium transition-all duration-300"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={onContinueToSettings}
+                      disabled={!hasRecording}
+                      className="px-6 py-3 bg-white hover:bg-white/90 text-orange-600 rounded-xl font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Publish Story
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>
-    )
+    </div>
+  )
+}
+
+const StorySettingsScreen = ({ onBack }: { onBack: () => void }) => {
+  const [isPrivate, setIsPrivate] = useState(false)
+  const [isCollaborative, setIsCollaborative] = useState(false)
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [customTag, setCustomTag] = useState("")
+
+  const predefinedTags = ["nostalgia", "family", "childhood", "love", "tradition", "wisdom", "art", "memories"]
+
+  const handleTagToggle = (tag: string) => {
+    setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
   }
 
-  if (mode === "type") {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-orange-600 to-pink-500 p-6">
-        <div className="max-w-4xl mx-auto">
-          <button
-            onClick={() => setMode("choose")}
-            className="text-white/80 hover:text-white flex items-center gap-2 mb-8"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            Back
-          </button>
+  const handleAddCustomTag = () => {
+    if (customTag.trim() && !selectedTags.includes(customTag.trim())) {
+      setSelectedTags((prev) => [...prev, customTag.trim()])
+      setCustomTag("")
+    }
+  }
 
-          <div className="bg-white rounded-2xl p-8 shadow-2xl">
-            <h1 className="text-3xl font-bold text-gray-900 mb-6">Write Your Story</h1>
+  return (
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-lg mx-auto px-6">
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm">📖</span>
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Story Settings</h2>
+            <p className="text-gray-600">Customize how your memory is shared</p>
+          </div>
 
-            <textarea
-              value={storyText}
-              onChange={(e) => setStoryText(e.target.value)}
-              placeholder="Share your memory here... What happened? How did it make you feel? What details make this story special to you?"
-              className="w-full h-96 p-6 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-orange-500 text-lg leading-relaxed"
-            />
-
-            <div className="flex justify-between items-center mt-4">
-              <span className="text-gray-500 text-sm">{storyText.length} characters</span>
+          {/* Privacy Section */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Eye className="w-5 h-5 text-gray-600" />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Privacy</h3>
+                  <p className="text-gray-600 text-sm">Everyone can see this</p>
+                </div>
+              </div>
               <button
-                onClick={() => setMode("settings")}
-                className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-xl font-semibold transition-colors"
+                onClick={() => setIsPrivate(!isPrivate)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  !isPrivate ? "bg-orange-500" : "bg-gray-200"
+                }`}
               >
-                Save Story
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    !isPrivate ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
               </button>
             </div>
           </div>
+
+          {/* Collaborative Memory Section */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Users className="w-5 h-5 text-gray-600" />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Collaborative Memory</h3>
+                  <p className="text-gray-600 text-sm">Share with a group</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsCollaborative(!isCollaborative)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  isCollaborative ? "bg-orange-500" : "bg-gray-200"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    isCollaborative ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
+          {/* Tags Section */}
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <Tag className="w-5 h-5 text-gray-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Tags</h3>
+            </div>
+
+            {/* Predefined Tags */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {predefinedTags.map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => handleTagToggle(tag)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                    selectedTags.includes(tag)
+                      ? "bg-orange-500 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+
+            {/* Custom Tag Input */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={customTag}
+                onChange={(e) => setCustomTag(e.target.value)}
+                placeholder="Add custom tag"
+                className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                onKeyPress={(e) => e.key === "Enter" && handleAddCustomTag()}
+              />
+              <button
+                onClick={handleAddCustomTag}
+                className="px-6 py-3 bg-orange-500 text-white rounded-xl text-sm font-medium hover:bg-orange-600 transition-colors"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+
+          {/* Publish Button */}
+          <button
+            onClick={onBack}
+            className="w-full py-4 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white rounded-xl font-semibold text-lg transition-all duration-300 hover:shadow-lg"
+          >
+            Publish
+          </button>
         </div>
       </div>
-    )
-  }
-
-  return null
+    </div>
+  )
 }
 
 const StoryDetailModal = ({ story, onClose }: { story: any; onClose: () => void }) => {
@@ -1584,6 +1712,10 @@ export default function App() {
     setSelectedStory(null)
   }
 
+  const handleContinueToSettings = () => {
+    setCurrentScreen("storysettings")
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header
@@ -1611,7 +1743,11 @@ export default function App() {
 
       {currentScreen === "settings" && <SettingsScreen onBack={handleBackToProfile} />}
 
-      {currentScreen === "create" && <StoryCreationScreen onBack={() => setCurrentScreen("home")} />}
+      {currentScreen === "create" && (
+        <StoryCreationScreen onBack={() => setCurrentScreen("home")} onContinueToSettings={handleContinueToSettings} />
+      )}
+
+      {currentScreen === "storysettings" && <StorySettingsScreen onBack={() => setCurrentScreen("home")} />}
 
       {showStoryModal && selectedStory && <StoryDetailModal story={selectedStory} onClose={closeStoryModal} />}
     </div>
