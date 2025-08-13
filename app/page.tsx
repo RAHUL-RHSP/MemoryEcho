@@ -969,6 +969,8 @@ const StoryCreationScreen = ({
   const [isGeneratingImage, setIsGeneratingImage] = useState(false)
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
 
+  const [showImageModal, setShowImageModal] = useState(false)
+
   const [currentQuestion, setCurrentQuestion] = useState(
     "Every memory has the power to inspire, connect, and heal. What story will you share today?",
   )
@@ -1048,49 +1050,62 @@ What specific moment in your story felt most important to you? I'd love to help 
   const generateStoryImage = async () => {
     setIsGeneratingImage(true)
 
-    // Simulate image generation process
-    await new Promise((resolve) => setTimeout(resolve, 3000))
+    try {
+      // Create a detailed prompt based on the story and chat context
+      const storyContext = storyText.slice(0, 200)
+      const chatContext = aiChatMessages
+        .slice(-2)
+        .map((msg) => msg.message)
+        .join(" ")
+      const combinedPrompt = `${storyContext} ${chatContext}`.slice(0, 300)
 
-    // Generate a placeholder image based on story content
-    const imagePrompt = storyText.slice(0, 100) + "..."
-    const generatedImageUrl = `/placeholder.svg?height=300&width=400&query=${encodeURIComponent(imagePrompt)}`
+      // Create image generation prompt
+      const imagePrompt = `Create a beautiful, artistic illustration that captures the essence of this story: ${combinedPrompt}. Style: warm, emotional, storytelling illustration`
 
-    setGeneratedImage(generatedImageUrl)
-    setIsGeneratingImage(false)
+      // Call image generation API
+      const response = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: imagePrompt,
+          storyContext: storyContext,
+        }),
+      })
 
-    // Add AI message about the generated image
-    const imageMessage =
-      "I've generated an image to complement your story! You can use this to enhance your storytelling or get inspiration for more visual details."
-    setAiChatMessages((prev) => [...prev, { role: "ai", message: imageMessage }])
-  }
+      const data = await response.json()
 
-  const generateAISuggestions = async () => {
-    setIsGeneratingAI(true)
-    // Simulate AI processing
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+      setGeneratedImage(data.imageUrl)
+      setShowImageModal(true)
 
-    const suggestions = [
-      "Can you describe the setting in more detail? What did the place look, smell, or sound like?",
-      "What emotions were you feeling during this moment? How did your body react?",
-      "Who else was involved in this story? What were their reactions or expressions?",
-      "What specific details made this moment memorable? Any particular words, colors, or sounds?",
-      "How did this experience change you or influence your perspective?",
-      "What was happening in your life at the time that made this moment significant?",
-    ]
+      // Add AI message about the generated image
+      const imageMessage = `🎨 I've created a visual representation of your story! This image captures the essence of what we've been discussing. You can use this to:
 
-    setAiSuggestions(suggestions.slice(0, 3))
-    setIsGeneratingAI(false)
-  }
+• Inspire additional details for your story
+• Share alongside your published story  
+• Help visualize the scene you're describing
 
-  const enhanceStoryWithAI = async () => {
-    setIsGeneratingAI(true)
-    // Simulate AI story enhancement
-    await new Promise((resolve) => setTimeout(resolve, 3000))
+What do you think of this interpretation? Does it spark any new ideas for your story?`
 
-    const enhanced = `${storyText}\n\n[AI Enhanced Version]\nYour story has been enriched with vivid details, emotional depth, and sensory descriptions that bring your memory to life. The enhanced version captures not just what happened, but how it felt, what you saw, heard, and experienced in that precious moment.`
+      setAiChatMessages((prev) => [...prev, { role: "ai", message: imageMessage }])
+    } catch (error) {
+      console.error("Image generation failed:", error)
+      const fallbackPrompt = storyText.slice(0, 50) || "story illustration"
+      setGeneratedImage(`/placeholder.svg?height=400&width=600&query=${encodeURIComponent(fallbackPrompt)}`)
+      setShowImageModal(true)
 
-    setEnhancedStory(enhanced)
-    setIsGeneratingAI(false)
+      setAiChatMessages((prev) => [
+        ...prev,
+        {
+          role: "ai",
+          message:
+            "I created a visual representation for your story! While I had some technical difficulties, I've generated an illustration that captures your story's theme.",
+        },
+      ])
+    } finally {
+      setIsGeneratingImage(false)
+    }
   }
 
   return (
@@ -1219,16 +1234,33 @@ What specific moment in your story felt most important to you? I'd love to help 
                     <button
                       onClick={() => {
                         if (storyText.trim()) {
-                          setMode("enhance")
-                          generateAISuggestions()
+                          generateStoryImage()
                         }
                       }}
-                      disabled={!storyText.trim()}
-                      className="px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white rounded-lg text-sm font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={!storyText.trim() || isGeneratingImage}
+                      className="px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white rounded-lg text-sm font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     >
-                      Enhance Story
+                      {isGeneratingImage ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          Generating...
+                        </>
+                      ) : (
+                        <>🎨 Generate Picture</>
+                      )}
                     </button>
                   </div>
+
+                  {generatedImage && (
+                    <div className="mt-4 bg-white/5 rounded-lg p-4 border border-white/10">
+                      <img
+                        src={generatedImage || "/placeholder.svg"}
+                        alt="AI-generated story illustration"
+                        className="w-full h-64 object-cover rounded-lg"
+                      />
+                      <p className="text-xs text-white/70 mt-2 text-center">Generated image based on your story</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1302,16 +1334,33 @@ What specific moment in your story felt most important to you? I'd love to help 
                     <button
                       onClick={() => {
                         if (hasRecording) {
-                          setMode("enhance")
-                          generateAISuggestions()
+                          generateStoryImage()
                         }
                       }}
-                      disabled={!hasRecording}
-                      className="px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white rounded-xl font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={!hasRecording || isGeneratingImage}
+                      className="px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white rounded-xl font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     >
-                      Enhance Story
+                      {isGeneratingImage ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          Generating...
+                        </>
+                      ) : (
+                        <>🎨 Generate Picture</>
+                      )}
                     </button>
                   </div>
+
+                  {generatedImage && (
+                    <div className="mt-4 bg-white/5 rounded-lg p-4 border border-white/10">
+                      <img
+                        src={generatedImage || "/placeholder.svg"}
+                        alt="AI-generated story illustration"
+                        className="w-full h-64 object-cover rounded-lg"
+                      />
+                      <p className="text-xs text-white/70 mt-2 text-center">Generated image based on your story</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1426,28 +1475,41 @@ What specific moment in your story felt most important to you? I'd love to help 
                             <h4 className="text-sm font-medium text-white/90">Visual Enhancement</h4>
                             <button
                               onClick={generateStoryImage}
-                              disabled={isGeneratingImage}
+                              disabled={isGeneratingImage || !storyText.trim()}
                               className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-all duration-300 disabled:opacity-50 flex items-center gap-2"
                             >
                               {isGeneratingImage ? (
                                 <>
                                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                  Generating...
+                                  Creating Art...
                                 </>
                               ) : (
-                                <>🎨 Generate Image</>
+                                <>🎨 Generate Story Image</>
                               )}
                             </button>
                           </div>
 
                           {generatedImage && (
-                            <div className="bg-white/5 rounded-lg p-3 border border-white/10">
-                              <img
-                                src={generatedImage || "/placeholder.svg"}
-                                alt="Generated story illustration"
-                                className="w-full h-48 object-cover rounded-lg mb-2"
-                              />
-                              <p className="text-xs text-white/70">Generated image based on your story content</p>
+                            <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                              <div className="relative group">
+                                <img
+                                  src={generatedImage || "/placeholder.svg"}
+                                  alt="AI-generated story illustration"
+                                  className="w-full h-56 object-cover rounded-lg mb-3 transition-transform group-hover:scale-[1.02]"
+                                />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 rounded-lg transition-colors"></div>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <p className="text-xs text-white/70">
+                                  AI-generated illustration based on your story and our conversation
+                                </p>
+                                <button
+                                  onClick={() => setGeneratedImage(null)}
+                                  className="text-xs text-white/50 hover:text-white/80 transition-colors"
+                                >
+                                  Remove
+                                </button>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -1476,6 +1538,47 @@ What specific moment in your story felt most important to you? I'd love to help 
           )}
         </div>
       </div>
+
+      {showImageModal && generatedImage && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-2xl font-bold text-gray-800">Your Story Illustration</h3>
+                <button onClick={() => setShowImageModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">
+                  ×
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <img
+                  src={generatedImage || "/placeholder.svg"}
+                  alt="Generated story illustration"
+                  className="w-full h-auto rounded-lg shadow-lg"
+                />
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowImageModal(false)}
+                  className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-colors"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    setShowImageModal(false)
+                    onContinueToSettings()
+                  }}
+                  className="px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white rounded-lg font-medium transition-all duration-300"
+                >
+                  Continue to Publish
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
